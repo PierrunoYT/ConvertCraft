@@ -119,7 +119,7 @@ All audio target presets disable video with `-vn`:
 
 **Input extensions:** `mp4`, `mkv`, `webm`, `avi`, `divx`, `mov`, `wmv`, `asf`, `flv`, `f4v`, `m4v`, `mpg`, `mpeg`, `m2v`, `vob`, `ts`, `mts`, `m2ts`, `3gp`, `3g2`, `ogv`, `mxf`, `rm`, `rmvb`, `dv`, `y4m`.
 
-**Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `m4v`, `ts`, `flv`, `wmv`, `ogv`, `gif`, plus every audio target above for audio extraction.
+**Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `m4v`, `ts`, `flv`, `wmv`, `ogv`, `gif`, `webp`, plus every audio target above for audio extraction.
 
 - **MP4/MOV/M4V:** `libx264`, preset `medium`, CRF `23`, pixel format `yuv420p`; AAC at `160k`; `+faststart`.
 - **MKV:** `libx264`, CRF `23`; AAC at `160k`.
@@ -129,6 +129,7 @@ All audio target presets disable video with `-vn`:
 - **WMV:** `wmv2`, video quality `4`; `wmav2` at `192k`.
 - **OGV:** `libtheora`, video quality `7`; `libvorbis`, quality `5`. Needs an FFmpeg built with Theora and Vorbis; Homebrew's `ffmpeg` formula has no Vorbis encoder, so use `ffmpeg-full` on macOS.
 - **GIF:** no audio; 12 fps; width capped at 480 pixels with Lanczos scaling and an automatically computed even height; palette generation/use; infinite looping.
+- **WebP:** animated WebP via `libwebp_anim`; no audio; 12 fps; width capped at 480 pixels like GIF; lossy quality `75`; infinite looping. Needs an FFmpeg built with libwebp.
 - **Audio targets:** use the audio presets above to extract the audio track.
 
 These presets re-encode rather than requesting stream copying. There are no UI controls for bitrate, resolution, stream selection, trimming, subtitles, or codec choice. FFmpeg's default stream-selection behavior applies because no explicit `-map` is supplied.
