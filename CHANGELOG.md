@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- OGA (Ogg audio) input.
 - Sony Wave64 (`.w64`) audio input.
 - MP2 audio input.
 - AVIF image output via the pure-Rust rav1e encoder. The **JPEG quality** slider is now **JPEG/AVIF quality** and applies to both.

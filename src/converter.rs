@@ -83,7 +83,7 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr" | "ff"
         | "dds" => Category::Image,
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
-        "mp3" | "mp2" | "wav" | "w64" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma"
+        "mp3" | "mp2" | "wav" | "w64" | "flac" | "ogg" | "oga" | "m4a" | "aac" | "opus" | "wma"
         | "aiff" | "aif" => Category::Audio,
         "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg" | "ts" => {
             Category::Video
@@ -111,6 +111,7 @@ fn normalize_ext(ext: &str) -> &str {
         "tif" => "tiff",
         "pbm" | "pgm" | "ppm" | "pam" => "pnm",
         "yml" => "yaml",
+        "oga" => "ogg",
         other => other,
     }
 }
@@ -1747,6 +1748,7 @@ mod tests {
         let codecs: &[&str] = match ext {
             "mpg" | "mpeg" => &["-c:v", "mpeg2video", "-c:a", "mp2"],
             "mp2" => &["-c:a", "mp2"],
+            "oga" => &["-c:a", "flac"],
             _ => &[],
         };
         cmd.args(codecs);
@@ -1763,8 +1765,8 @@ mod tests {
         }
         let dir = tempfile::tempdir().unwrap();
         for ext in [
-            "mp3", "mp2", "wav", "w64", "flac", "ogg", "m4a", "aac", "opus", "wma", "aiff", "aif",
-            "mp4", "mkv", "webm", "avi", "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
+            "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "aac", "opus", "wma", "aiff",
+            "aif", "mp4", "mkv", "webm", "avi", "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();
