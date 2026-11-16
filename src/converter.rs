@@ -84,7 +84,9 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "dds" => Category::Image,
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
         "mp3" | "mp2" | "wav" | "w64" | "flac" | "ogg" | "oga" | "m4a" | "m4b" | "aac" | "opus"
-        | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" => Category::Audio,
+        | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" | "caf" => {
+            Category::Audio
+        }
         "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg" | "ts" => {
             Category::Video
         }
@@ -833,8 +835,8 @@ impl<W: Write> Write for LimitedWriter<W> {
 
 /// Demuxers for the advertised audio/video inputs. Playlist and concat demuxers (HLS,
 /// ffconcat) that could pull other local files into the output are not on the list.
-const MEDIA_DEMUXERS: &str = "aac,ac3,aiff,asf,avi,dts,eac3,flac,flv,matroska,mov,mp3,mpeg,mpegts,\
-     ogg,w64,wav";
+const MEDIA_DEMUXERS: &str = "aac,ac3,aiff,asf,avi,caf,dts,eac3,flac,flv,matroska,mov,mp3,mpeg,\
+     mpegts,ogg,w64,wav";
 /// FFmpeg reports progress about twice a second; a job silent this long is stuck.
 const FFMPEG_STALL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 /// Only the end of FFmpeg's error output is shown, so only the end is kept.
@@ -1770,8 +1772,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         for ext in [
             "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "m4b", "aac", "opus", "wma",
-            "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "mp4", "mkv", "webm", "avi", "mov",
-            "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
+            "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "caf", "mp4", "mkv", "webm", "avi",
+            "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();

@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- CAF (Core Audio Format) input.
 - MKA (Matroska audio) input.
 - DTS audio input.
 - E-AC3 (Dolby Digital Plus) audio input.
