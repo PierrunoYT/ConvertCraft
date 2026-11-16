@@ -19,7 +19,9 @@ fn embed_icon() {
     let frames: Vec<IcoFrame> = [256u32, 64, 48, 32, 16]
         .iter()
         .map(|&size| {
-            let rgba = logo.resize_exact(size, size, FilterType::Lanczos3).into_rgba8();
+            let rgba = logo
+                .resize_exact(size, size, FilterType::Lanczos3)
+                .into_rgba8();
             IcoFrame::as_png(rgba.as_raw(), size, size, image::ExtendedColorType::Rgba8)
                 .expect("encode icon frame")
         })
@@ -28,7 +30,9 @@ fn embed_icon() {
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let ico_path = out_dir.join("convertcraft.ico");
     let file = std::fs::File::create(&ico_path).expect("create icon file");
-    IcoEncoder::new(file).encode_images(&frames).expect("write icon file");
+    IcoEncoder::new(file)
+        .encode_images(&frames)
+        .expect("write icon file");
 
     winresource::WindowsResource::new()
         .set_icon(ico_path.to_str().expect("UTF-8 OUT_DIR"))
