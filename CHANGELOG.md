@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- WMV video output.
 - FLV video output.
 - MPEG-TS (`.ts`) video output.
 - M4V video output.
