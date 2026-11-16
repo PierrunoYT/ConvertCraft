@@ -52,7 +52,7 @@ impl Category {
     pub fn targets(self) -> &'static [&'static str] {
         match self {
             Category::Image => &[
-                "png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "tga", "qoi", "pnm",
+                "png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "tga", "qoi", "pnm", "hdr",
             ],
             Category::Data => &["json", "yaml", "toml", "csv"],
             Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus"],
@@ -77,7 +77,7 @@ pub fn extension(path: &Path) -> String {
 pub fn detect(path: &Path) -> Option<Category> {
     let cat = match extension(path).as_str() {
         "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
-        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" => Category::Image,
+        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" => Category::Image,
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
         "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
             Category::Audio
@@ -171,7 +171,7 @@ const MAX_IMAGE_PIXELS: u64 = 100_000_000;
 /// Estimated memory shared by all concurrent image jobs.
 const IMAGE_MEMORY_BUDGET: u64 = 1536 * 1024 * 1024;
 /// Decoders accepted after content sniffing; matches the extensions in `detect`.
-const INPUT_IMAGE_FORMATS: [ImageFormat; 10] = [
+const INPUT_IMAGE_FORMATS: [ImageFormat; 11] = [
     ImageFormat::Png,
     ImageFormat::Jpeg,
     ImageFormat::WebP,
@@ -182,6 +182,7 @@ const INPUT_IMAGE_FORMATS: [ImageFormat; 10] = [
     ImageFormat::Tga,
     ImageFormat::Qoi,
     ImageFormat::Pnm,
+    ImageFormat::Hdr,
 ];
 
 static IMAGE_MEMORY: MemoryBudget = MemoryBudget::new(IMAGE_MEMORY_BUDGET);
@@ -284,9 +285,14 @@ fn convert_image(
     }
     let fitted = max.and_then(|(w, h)| fit_within(shown_width, shown_height, w, h));
 
-    // Decoded buffer, the 8-bit RGB(A) copy made before encoding, a rotated copy, and
-    // the resize's f32 RGBA intermediate (source width × new height) plus its result.
-    let mut memory = decoder.total_bytes().saturating_add(pixels * 4);
+    // Decoded buffer, the copy in the encoder's layout (up to 32-bit float RGBA for
+    // HDR), a rotated copy, and the resize's f32 RGBA intermediate (source
+    // width × new height) plus its result.
+    let copy_bytes = match target {
+        "hdr" => 16,
+        _ => 4,
+    };
+    let mut memory = decoder.total_bytes().saturating_add(pixels * copy_bytes);
     if orientation != Orientation::NoTransforms {
         memory = memory.saturating_add(decoder.total_bytes());
     }
@@ -306,7 +312,7 @@ fn convert_image(
         "jpg" => {
             encode_jpeg(&img, &mut writer, opts.jpeg_quality)?;
         }
-        "png" => img.write_to(&mut writer, ImageFormat::Png)?,
+        "png" => encoder_layout(img, target).write_to(&mut writer, ImageFormat::Png)?,
         "ico" => encode_ico(img, &mut writer)?,
         _ => {
             let format = match target {
@@ -317,6 +323,7 @@ fn convert_image(
                 "tga" => ImageFormat::Tga,
                 "qoi" => ImageFormat::Qoi,
                 "pnm" => ImageFormat::Pnm,
+                "hdr" => ImageFormat::Hdr,
                 other => bail!("unsupported image target: {other}"),
             };
             encoder_layout(img, target).write_to(&mut writer, format)?;
@@ -372,8 +379,15 @@ fn fit_within(width: u32, height: u32, max_width: u32, max_height: u32) -> Optio
 fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
     let color = img.color();
     let (gray, alpha) = (!color.has_color(), color.has_alpha());
-    let deep = color.bytes_per_pixel() > color.channel_count();
+    let bytes_per_sample = color.bytes_per_pixel() / color.channel_count();
+    let deep = bytes_per_sample > 1;
     match target {
+        // HDR stores float RGB samples without alpha.
+        "hdr" => DynamicImage::ImageRgb32F(img.into_rgb32f()),
+        // PNG keeps 8- and 16-bit layouts as-is; float (HDR) becomes 16-bit.
+        "png" if bytes_per_sample == 4 && alpha => DynamicImage::ImageRgba16(img.into_rgba16()),
+        "png" if bytes_per_sample == 4 => DynamicImage::ImageRgb16(img.into_rgb16()),
+        "png" => img,
         // TIFF and PNM (written as PAM) store 16-bit samples but have no 16-bit
         // gray+alpha layout in `image`.
         "tiff" | "pnm" if deep => match (gray, alpha) {

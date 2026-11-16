@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- Radiance HDR image input and output. Float images become 16-bit when saved as PNG and are clipped without tone mapping in 8- and 16-bit formats.
 - `.jfif`, `.pam`, and `.apng` image inputs; APNG converts its first frame.
 - PNM image output, written as PAM (`P7`) and keeping 16-bit depth.
 - `scripts/bundle-macos.sh` builds a double-clickable `ConvertCraft.app` with the logo as its icon. On macOS, FFmpeg is also looked up in Homebrew's `/opt/homebrew/bin` and `/usr/local/bin`, so an app opened from Finder or the Dock finds a Homebrew FFmpeg despite launchd's minimal `PATH`.

@@ -4,28 +4,31 @@ The extension lists and targets below come from `Category::targets` and `detect`
 
 ## Images
 
-**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`.
+**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`.
 
-**Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`.
+**Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `hdr`.
 
-The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as OpenEXR, HDR, or DDS, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft.
+The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as OpenEXR or DDS, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft.
 
-Images larger than **100 megapixels** (for example 10,000×10,000) are rejected before their pixels are decoded. Normalizing to 8-bit RGB(A) needs up to 4 bytes per pixel on top of the decoded image, so all running image jobs share an estimated memory budget of 1.5 GiB; a job waits for memory instead of running alongside the others when the budget is full.
+HDR (Radiance RGBE) holds floating-point, linear-light pixels. Converting it to an 8- or 16-bit format clips values to the 0–1 range without tone mapping or a gamma curve, so bright highlights clip and the result may look darker than in an HDR viewer. Converting 8- or 16-bit images to HDR stores the sample values as-is, without linearizing them.
+
+Images larger than **100 megapixels** (for example 10,000×10,000) are rejected before their pixels are decoded. Normalizing to the target's layout needs up to 4 bytes per pixel on top of the decoded image (16 for HDR), so all running image jobs share an estimated memory budget of 1.5 GiB; a job waits for memory instead of running alongside the others when the budget is full.
 
 An EXIF orientation tag (set by cameras and phones for rotated shots) is applied to the pixels, so the output displays upright even though the metadata itself is not copied.
 
 **Shrink images to fit** (off by default) scales images down with Lanczos3 filtering so they fit within the chosen maximum width and height, keeping the aspect ratio. The limits apply to the upright image after EXIF rotation. Images already within the limits are never enlarged.
 
 - **JPG:** converts to 8-bit RGB and encodes at the selected quality (90 by default). JPEG has no transparency, so transparent and semi-transparent pixels are composited over white.
-- **PNG:** saves the decoded image as-is, keeping its channels and 8- or 16-bit depth.
+- **PNG:** saves the decoded image as-is, keeping its channels and 8- or 16-bit depth. Float inputs (HDR) are stored as 16-bit RGB.
 - **TIFF, PNM:** keep 16-bit depth for 16-bit inputs (grayscale, RGB, or RGBA); 16-bit gray+alpha is stored as RGBA. TIFF also stores 8-bit gray+alpha as RGBA.
 - **PNM:** written as PAM (`P7`), which holds every channel layout including alpha. Tools that only read PBM/PGM/PPM may not open it.
 - **ICO:** fits the image within 256×256 (or the smaller **Shrink images to fit** limits) while preserving aspect ratio, using Lanczos3 filtering, and adds 48, 32, and 16 pixel versions when they are smaller, so Windows has a sharp icon for each view.
 - **BMP, TGA, WebP, PNM:** keep the input's channel layout at 8 bits (grayscale, gray+alpha, RGB, or RGBA); no alpha channel is added to opaque images.
 - **QOI:** RGB for opaque inputs, RGBA otherwise.
 - **GIF:** converts to 8-bit RGBA and quantizes to a 256-color palette.
+- **HDR:** 32-bit float RGB; alpha is dropped.
 
-There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; APNG inputs convert their first frame. Only PNG, TIFF, and PNM keep 16-bit depth.
+There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; APNG inputs convert their first frame. Only PNG, TIFF, and PNM keep 16-bit depth, and only HDR keeps float samples.
 
 ## Structured data
 
