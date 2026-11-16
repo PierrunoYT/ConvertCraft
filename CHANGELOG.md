@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- AC3 audio output, also as an audio-extraction target for video.
 - WMA audio output, also as an audio-extraction target for video.
 - AIFF audio output, also as an audio-extraction target for video.
 - AAC (raw ADTS) audio output, also as an audio-extraction target for video.
