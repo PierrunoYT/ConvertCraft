@@ -119,11 +119,11 @@ All audio target presets disable video with `-vn`:
 
 **Input extensions:** `mp4`, `mkv`, `webm`, `avi`, `divx`, `mov`, `wmv`, `asf`, `flv`, `f4v`, `m4v`, `mpg`, `mpeg`, `m2v`, `vob`, `ts`, `mts`, `m2ts`, `3gp`, `3g2`, `ogv`, `mxf`, `rm`, `rmvb`, `dv`, `y4m`.
 
-**Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `m4v`, `ts`, `gif`, plus every audio target above for audio extraction.
+**Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `m4v`, `ts`, `flv`, `gif`, plus every audio target above for audio extraction.
 
 - **MP4/MOV/M4V:** `libx264`, preset `medium`, CRF `23`, pixel format `yuv420p`; AAC at `160k`; `+faststart`.
 - **MKV:** `libx264`, CRF `23`; AAC at `160k`.
-- **TS:** `libx264`, preset `medium`, CRF `23`, pixel format `yuv420p`; AAC at `160k`.
+- **TS/FLV:** `libx264`, preset `medium`, CRF `23`, pixel format `yuv420p`; AAC at `160k`.
 - **WebM:** `libvpx-vp9`, CRF `32`, video bitrate `0`; `libopus` audio.
 - **AVI:** `mpeg4`, video quality `5`; `libmp3lame`, audio quality `4`.
 - **GIF:** no audio; 12 fps; width capped at 480 pixels with Lanczos scaling and an automatically computed even height; palette generation/use; infinite looping.

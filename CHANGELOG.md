@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- FLV video output.
 - MPEG-TS (`.ts`) video output.
 - M4V video output.
 - AC3 audio output, also as an audio-extraction target for video.
