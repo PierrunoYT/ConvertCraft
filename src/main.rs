@@ -580,11 +580,11 @@ impl App {
                 ui.separator();
 
                 ui.horizontal(|ui| {
-                    ui.label("JPEG quality");
-                    ui.label(RichText::new(self.opts.jpeg_quality.to_string()).strong());
+                    ui.label("JPEG/AVIF quality");
+                    ui.label(RichText::new(self.opts.quality.to_string()).strong());
                 });
                 ui.spacing_mut().slider_width = ui.available_width();
-                ui.add(egui::Slider::new(&mut self.opts.jpeg_quality, 10..=100).show_value(false));
+                ui.add(egui::Slider::new(&mut self.opts.quality, 10..=100).show_value(false));
                 ui.separator();
 
                 ui.checkbox(&mut self.opts.resize, "Shrink images to fit")

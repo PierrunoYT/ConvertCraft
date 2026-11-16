@@ -6,9 +6,9 @@ The extension lists and targets below come from `Category::targets` and `detect`
 
 **Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`, `exr`, `ff`, `dds`.
 
-**Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `hdr`, `exr`, `ff`.
+**Output targets:** `png`, `jpg`, `webp`, `avif`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `hdr`, `exr`, `ff`.
 
-The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as AVIF, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft. DDS inputs decode their main surface only (no mipmaps, cube faces, or array layers).
+The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as AVIF, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft. AVIF is output-only because the `image` crate's AVIF decoder needs the native dav1d library. DDS inputs decode their main surface only (no mipmaps, cube faces, or array layers).
 
 HDR (Radiance RGBE) and OpenEXR hold floating-point, linear-light pixels. Converting them to an 8- or 16-bit format clips values to the 0–1 range without tone mapping or a gamma curve, so bright highlights clip and the result may look darker than in an HDR viewer. Converting 8- or 16-bit images to HDR or EXR stores the sample values as-is, without linearizing them.
 
@@ -20,6 +20,7 @@ An EXIF orientation tag (set by cameras and phones for rotated shots) is applied
 
 - **JPG:** converts to 8-bit RGB and encodes at the selected quality (90 by default). JPEG has no transparency, so transparent and semi-transparent pixels are composited over white.
 - **PNG:** saves the decoded image as-is, keeping its channels and 8- or 16-bit depth. Float inputs (HDR, EXR) are stored as 16-bit RGB or RGBA.
+- **AVIF:** 8-bit, encoded with the pure-Rust rav1e encoder (speed preset 6) at the selected quality (90 by default); alpha is kept, 16-bit and float inputs are reduced to 8 bits. Encoding is much slower than the other formats, especially for large images.
 - **TIFF, PNM:** keep 16-bit depth for 16-bit inputs (grayscale, RGB, or RGBA); 16-bit gray+alpha is stored as RGBA. TIFF also stores 8-bit gray+alpha as RGBA.
 - **PNM:** written as PAM (`P7`), which holds every channel layout including alpha. Tools that only read PBM/PGM/PPM may not open it.
 - **ICO:** fits the image within 256×256 (or the smaller **Shrink images to fit** limits) while preserving aspect ratio, using Lanczos3 filtering, and adds 48, 32, and 16 pixel versions when they are smaller, so Windows has a sharp icon for each view.

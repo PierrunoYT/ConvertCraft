@@ -34,7 +34,7 @@ Output settings are in the **Output options** panel on the right:
 
 - **Next to source file:** write into each input's parent directory (the default).
 - **Choose folder…:** put all outputs directly in one folder; the source directory hierarchy is not reproduced.
-- **JPEG quality:** 10–100, default 90; affects JPG output only.
+- **JPEG/AVIF quality:** 10–100, default 90; affects JPG and AVIF output only.
 - **Shrink images to fit:** off by default. When enabled, images larger than the maximum width × height (default 1920 × 1080) are scaled down to fit, keeping the aspect ratio; smaller images are left as they are.
 - **Overwrite existing files:** disabled by default. Enable only if replacing existing output files is acceptable.
 - **Safe CSV for spreadsheets:** enabled by default. CSV cells that start with `=`, `+`, `-`, `@`, tab, or carriage return get an apostrophe prefix so Excel, LibreOffice, or Google Sheets do not run them as formulas. Disable it when the CSV must contain those values unchanged.

@@ -16,7 +16,9 @@ use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use image::{
-    DynamicImage, ImageDecoder, ImageFormat, codecs::jpeg::JpegEncoder, imageops::FilterType,
+    DynamicImage, ImageDecoder, ImageFormat,
+    codecs::{avif::AvifEncoder, jpeg::JpegEncoder},
+    imageops::FilterType,
     metadata::Orientation,
 };
 use serde::de::{self, DeserializeSeed, Deserializer, MapAccess, SeqAccess, Visitor};
@@ -52,8 +54,8 @@ impl Category {
     pub fn targets(self) -> &'static [&'static str] {
         match self {
             Category::Image => &[
-                "png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "tga", "qoi", "pnm", "hdr",
-                "exr", "ff",
+                "png", "jpg", "webp", "avif", "bmp", "gif", "tiff", "ico", "tga", "qoi", "pnm",
+                "hdr", "exr", "ff",
             ],
             Category::Data => &["json", "yaml", "toml", "csv"],
             Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus"],
@@ -116,7 +118,8 @@ fn normalize_ext(ext: &str) -> &str {
 
 #[derive(Clone)]
 pub struct Options {
-    pub jpeg_quality: u8,
+    /// Lossy quality (10–100) for JPEG and AVIF output.
+    pub quality: u8,
     pub overwrite: bool,
     /// Prefix CSV cells that spreadsheets would evaluate as formulas.
     pub csv_formula_guard: bool,
@@ -129,7 +132,7 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
-            jpeg_quality: 90,
+            quality: 90,
             overwrite: false,
             csv_formula_guard: true,
             resize: false,
@@ -316,7 +319,12 @@ fn convert_image(
     let mut writer = BufWriter::new(output);
     match target {
         "jpg" => {
-            encode_jpeg(&img, &mut writer, opts.jpeg_quality)?;
+            encode_jpeg(&img, &mut writer, opts.quality)?;
+        }
+        "avif" => {
+            let encoder =
+                AvifEncoder::new_with_speed_quality(&mut writer, AVIF_SPEED, opts.quality);
+            encoder_layout(img, target).write_with_encoder(encoder)?;
         }
         "png" => encoder_layout(img, target).write_to(&mut writer, ImageFormat::Png)?,
         "ico" => encode_ico(img, &mut writer)?,
@@ -340,6 +348,10 @@ fn convert_image(
     writer.flush().context("cannot flush image output")?;
     Ok(())
 }
+
+/// rav1e speed preset (1 slowest, 10 fastest). Slower presets shrink files a little
+/// but take much longer; the `image` default is 4.
+const AVIF_SPEED: u8 = 6;
 
 /// Standard icon sizes Windows picks from for lists, title bars, and the taskbar.
 const ICO_SMALL_SIZES: [u32; 3] = [48, 32, 16];
@@ -413,7 +425,7 @@ fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
         // QOI has only RGB and RGBA.
         "qoi" if alpha => DynamicImage::ImageRgba8(img.into_rgba8()),
         "qoi" => DynamicImage::ImageRgb8(img.into_rgb8()),
-        // BMP, TGA, WebP, PNM and 8-bit TIFF accept every 8-bit layout.
+        // AVIF, BMP, TGA, WebP, PNM and 8-bit TIFF accept every 8-bit layout.
         _ => match (gray, alpha) {
             (true, false) => DynamicImage::ImageLuma8(img.into_luma8()),
             (true, true) => DynamicImage::ImageLumaA8(img.into_luma_alpha8()),
@@ -1096,6 +1108,11 @@ mod tests {
         for &t in Category::Image.targets() {
             let out = convert_to(&src, dir.path(), Category::Image, t, &Options::default())
                 .unwrap_or_else(|e| panic!("{t}: {e:#}"));
+            if t == "avif" {
+                // No AVIF decoder is built in; check the ISO-BMFF brand instead.
+                assert_eq!(&std::fs::read(&out).unwrap()[4..12], b"ftypavif");
+                continue;
+            }
             image::open(&out).unwrap_or_else(|e| panic!("reopen {t}: {e}"));
         }
     }
@@ -1121,7 +1138,7 @@ mod tests {
         for (name, img) in sources {
             let src = dir.path().join(name);
             img.save(&src).unwrap();
-            for &t in Category::Image.targets() {
+            for &t in Category::Image.targets().iter().filter(|&&t| t != "avif") {
                 let out = convert_to(&src, dir.path(), Category::Image, t, &Options::default())
                     .unwrap_or_else(|e| panic!("{name} -> {t}: {e:#}"));
                 let color = image::open(&out)

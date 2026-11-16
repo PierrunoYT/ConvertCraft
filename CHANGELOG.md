@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- AVIF image output via the pure-Rust rav1e encoder. The **JPEG quality** slider is now **JPEG/AVIF quality** and applies to both.
 - DDS image input (main surface only).
 - Farbfeld image input and output (16-bit RGBA).
 - OpenEXR image input and output (32-bit float RGB or RGBA).
