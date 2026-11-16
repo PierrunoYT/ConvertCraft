@@ -58,10 +58,10 @@ impl Category {
                 "hdr", "exr", "ff",
             ],
             Category::Data => &["json", "yaml", "toml", "csv"],
-            Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus"],
+            Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus", "aac"],
             Category::Video => &[
                 "mp4", "mkv", "webm", "avi", "mov", "gif", "mp3", "wav", "flac", "ogg", "m4a",
-                "opus",
+                "opus", "aac",
             ],
         }
     }
@@ -937,6 +937,7 @@ fn ffmpeg_args(target: &str) -> &'static [&'static str] {
         "ogg" => &["-vn", "-c:a", "libvorbis", "-q:a", "5"],
         "m4a" => &["-vn", "-c:a", "aac", "-b:a", "192k"],
         "opus" => &["-vn", "-c:a", "libopus", "-b:a", "128k"],
+        "aac" => &["-vn", "-c:a", "aac", "-b:a", "192k"],
         "mp4" | "mov" => &[
             "-c:v",
             "libx264",
