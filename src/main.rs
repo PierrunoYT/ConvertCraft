@@ -553,6 +553,26 @@ impl App {
                          so spreadsheets show them as text instead of running them as formulas",
                 );
             });
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut self.opts.resize, "Shrink images to fit")
+                    .on_hover_text(
+                        "Scale images down to fit within the given width and height, \
+                         keeping the aspect ratio. Smaller images are not enlarged.",
+                    );
+                ui.add_enabled_ui(self.opts.resize, |ui| {
+                    ui.add(
+                        egui::DragValue::new(&mut self.opts.max_width)
+                            .range(1..=65_535)
+                            .suffix(" px"),
+                    );
+                    ui.label("×");
+                    ui.add(
+                        egui::DragValue::new(&mut self.opts.max_height)
+                            .range(1..=65_535)
+                            .suffix(" px"),
+                    );
+                });
+            });
         });
         ui.add_space(4.0);
         ui.horizontal(|ui| {

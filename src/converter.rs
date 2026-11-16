@@ -116,6 +116,10 @@ pub struct Options {
     pub overwrite: bool,
     /// Prefix CSV cells that spreadsheets would evaluate as formulas.
     pub csv_formula_guard: bool,
+    /// Shrink images to fit within `max_width`×`max_height`, keeping the aspect ratio.
+    pub resize: bool,
+    pub max_width: u32,
+    pub max_height: u32,
 }
 
 impl Default for Options {
@@ -124,6 +128,9 @@ impl Default for Options {
             jpeg_quality: 90,
             overwrite: false,
             csv_formula_guard: true,
+            resize: false,
+            max_width: 1920,
+            max_height: 1080,
         }
     }
 }
@@ -257,13 +264,40 @@ fn convert_image(
         "image is too large to convert ({width}×{height}; the limit is {} megapixels)",
         MAX_IMAGE_PIXELS / 1_000_000
     );
-    // Decoded buffer plus the 8-bit RGB(A) copy made before encoding.
-    let _memory = IMAGE_MEMORY.reserve(decoder.total_bytes().saturating_add(pixels * 4));
     // Cameras store rotation as EXIF metadata; bake it into the pixels, since outputs
     // carry no metadata. Unreadable EXIF is ignored rather than failing the conversion.
     let orientation = decoder.orientation().unwrap_or(Orientation::NoTransforms);
+    let (shown_width, shown_height) = match orientation {
+        Orientation::Rotate90
+        | Orientation::Rotate270
+        | Orientation::Rotate90FlipH
+        | Orientation::Rotate270FlipH => (height, width),
+        _ => (width, height),
+    };
+    let mut max = opts.resize.then_some((opts.max_width, opts.max_height));
+    if target == "ico" {
+        // ICO entries are limited to 256x256.
+        let (w, h) = max.unwrap_or((256, 256));
+        max = Some((w.min(256), h.min(256)));
+    }
+    let fitted = max.and_then(|(w, h)| fit_within(shown_width, shown_height, w, h));
+
+    // Decoded buffer, the 8-bit RGB(A) copy made before encoding, a rotated copy, and
+    // the resize's f32 RGBA intermediate (source width × new height) plus its result.
+    let mut memory = decoder.total_bytes().saturating_add(pixels * 4);
+    if orientation != Orientation::NoTransforms {
+        memory = memory.saturating_add(decoder.total_bytes());
+    }
+    if let Some((w, h)) = fitted {
+        let (w, h) = (u64::from(w), u64::from(h));
+        memory = memory.saturating_add(u64::from(shown_width) * h * 16 + w * h * 4);
+    }
+    let _memory = IMAGE_MEMORY.reserve(memory);
     let mut img = DynamicImage::from_decoder(decoder).context("cannot decode image")?;
     img.apply_orientation(orientation);
+    if let Some((w, h)) = fitted {
+        img = img.resize_exact(w, h, FilterType::Lanczos3);
+    }
 
     let mut writer = BufWriter::new(output);
     match target {
@@ -272,22 +306,14 @@ fn convert_image(
         }
         "png" => img.write_to(&mut writer, ImageFormat::Png)?,
         _ => {
-            let (format, img) = match target {
-                "ico" => {
-                    // ICO entries are limited to 256x256.
-                    let img = if img.width() > 256 || img.height() > 256 {
-                        img.resize(256, 256, FilterType::Lanczos3)
-                    } else {
-                        img
-                    };
-                    (ImageFormat::Ico, img)
-                }
-                "webp" => (ImageFormat::WebP, img),
-                "bmp" => (ImageFormat::Bmp, img),
-                "gif" => (ImageFormat::Gif, img),
-                "tiff" => (ImageFormat::Tiff, img),
-                "tga" => (ImageFormat::Tga, img),
-                "qoi" => (ImageFormat::Qoi, img),
+            let format = match target {
+                "ico" => ImageFormat::Ico,
+                "webp" => ImageFormat::WebP,
+                "bmp" => ImageFormat::Bmp,
+                "gif" => ImageFormat::Gif,
+                "tiff" => ImageFormat::Tiff,
+                "tga" => ImageFormat::Tga,
+                "qoi" => ImageFormat::Qoi,
                 other => bail!("unsupported image target: {other}"),
             };
             encoder_layout(img, target).write_to(&mut writer, format)?;
@@ -295,6 +321,18 @@ fn convert_image(
     }
     writer.flush().context("cannot flush image output")?;
     Ok(())
+}
+
+/// The size that fits `width`×`height` inside `max_width`×`max_height` keeping the
+/// aspect ratio, or `None` when it already fits. Images are never enlarged.
+fn fit_within(width: u32, height: u32, max_width: u32, max_height: u32) -> Option<(u32, u32)> {
+    if width <= max_width && height <= max_height {
+        return None;
+    }
+    let scale =
+        (f64::from(max_width) / f64::from(width)).min(f64::from(max_height) / f64::from(height));
+    let side = |n: u32| ((f64::from(n) * scale).round() as u32).max(1);
+    Some((side(width), side(height)))
 }
 
 /// Converts to the closest pixel layout the target encoder accepts, keeping grayscale
@@ -1074,22 +1112,32 @@ mod tests {
         );
     }
 
-    #[test]
-    fn exif_orientation_is_applied() {
+    /// Writes a `width`×`height` PNG whose EXIF orientation says "rotate 90° clockwise".
+    fn rotated_png(path: &Path, width: u32, height: u32) {
         use image::ImageEncoder;
-        let dir = tempfile::tempdir().unwrap();
-        let src = dir.path().join("rotated.png");
         // Big-endian TIFF header + one IFD entry: Orientation (0x0112) = 6, rotate 90° CW.
         let exif = [
             b'M', b'M', 0, 42, 0, 0, 0, 8, 0, 1, 0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, 6, 0, 0, 0, 0, 0,
             0, 0, 0,
         ];
-        let pixels = image::RgbImage::from_fn(4, 2, |x, _| image::Rgb([x as u8 * 60, 0, 0]));
-        let mut encoder = image::codecs::png::PngEncoder::new(File::create(&src).unwrap());
+        let pixels = image::RgbImage::from_fn(width, height, |x, _| image::Rgb([x as u8, 0, 0]));
+        let mut encoder = image::codecs::png::PngEncoder::new(File::create(path).unwrap());
         encoder.set_exif_metadata(exif.to_vec()).unwrap();
         encoder
-            .write_image(pixels.as_raw(), 4, 2, image::ExtendedColorType::Rgb8)
+            .write_image(
+                pixels.as_raw(),
+                width,
+                height,
+                image::ExtendedColorType::Rgb8,
+            )
             .unwrap();
+    }
+
+    #[test]
+    fn exif_orientation_is_applied() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("rotated.png");
+        rotated_png(&src, 4, 2);
         let out = convert_to(
             &src,
             dir.path(),
@@ -1100,6 +1148,34 @@ mod tests {
         .unwrap();
         let out = image::open(out).unwrap();
         assert_eq!((out.width(), out.height()), (2, 4));
+    }
+
+    #[test]
+    fn resize_fits_within_bounds_and_never_enlarges() {
+        let dir = tempfile::tempdir().unwrap();
+        let opts = Options {
+            resize: true,
+            max_width: 100,
+            max_height: 100,
+            ..Options::default()
+        };
+        let wide = dir.path().join("wide.png");
+        image::RgbImage::new(400, 200).save(&wide).unwrap();
+        let small = dir.path().join("small.png");
+        image::RgbImage::new(50, 30).save(&small).unwrap();
+        // Stored 400×200, displayed 200×400: the bounds apply to the upright image.
+        let rotated = dir.path().join("rotated.png");
+        rotated_png(&rotated, 400, 200);
+        for (src, target, expected) in [
+            (&wide, "jpg", (100, 50)),
+            (&wide, "png", (100, 50)),
+            (&small, "bmp", (50, 30)),
+            (&rotated, "png", (50, 100)),
+        ] {
+            let out = convert_to(src, dir.path(), Category::Image, target, &opts).unwrap();
+            let out = image::open(out).unwrap();
+            assert_eq!((out.width(), out.height()), expected, "{src:?} -> {target}");
+        }
     }
 
     /// A BMP header declaring `width`x`height` pixels, with no pixel data.

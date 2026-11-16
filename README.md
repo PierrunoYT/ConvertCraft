@@ -22,7 +22,7 @@ ConvertCraft is a native desktop batch converter for **images, structured data, 
 - **Keep working:** conversions run on up to four background workers, with per-file status and batch progress.
 - **Choose your destination:** save beside each source or collect outputs in one folder.
 - **Avoid accidental replacement:** overwriting is off by default; filename collisions receive numbered suffixes.
-- **Tune JPEG output:** set quality from 10 to 100, with a default of 90.
+- **Tune image output:** set JPEG quality from 10 to 100 (default 90) and optionally shrink images to fit a maximum width and height.
 - **Find the result:** click a completed file's **Done** status to reveal it in your file manager.
 
 ## Getting started
@@ -95,7 +95,7 @@ Targets are restricted to each category. Extension recognition is case-insensiti
 ## Know before converting
 
 - **Keep originals and backups.** Filename checks are not atomic and do not detect every filesystem alias. Outputs are written directly, and failed conversions can leave partial files.
-- **Images are not archival copies.** JPEG discards transparency. ICO output fits within 256×256. Image conversion does not preserve all animation frames, metadata, or original bit depth.
+- **Images are not archival copies.** JPEG has no transparency, so transparent areas become white. ICO output fits within 256×256. Image conversion does not preserve animation frames or metadata, and only PNG and TIFF keep 16-bit depth.
 - **Data conversion can change representation.** Comments and formatting are lost. CSV infers scalar types, so `00123` can become `123`. TOML rejects nulls and wraps non-object roots under `items`. See [data compatibility](docs/formats.md#structured-data).
 - **Media is re-encoded.** Fixed presets determine quality and codec selection; there are no bitrate, trimming, subtitle, or stream-selection controls.
 - **Sessions are temporary.** Settings and the queue are not saved. A running batch can be cancelled; image and data jobs already in progress finish first.
