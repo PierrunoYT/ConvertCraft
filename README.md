@@ -121,7 +121,7 @@ Failed rows can be retried with **Convert**. Successful rows are skipped on subs
 | Images | PNG/APNG, JPG/JPEG/JFIF, WebP, BMP, GIF, TIF/TIFF, ICO, TGA, QOI, PNM/PBM/PGM/PPM/PAM, HDR, EXR, Farbfeld (FF), DDS | PNG, JPG, WebP, AVIF, BMP, GIF, TIFF, ICO, TGA, QOI, PNM, HDR, EXR, Farbfeld | Rust `image` |
 | Structured data | JSON, YAML/YML, TOML, CSV | JSON, YAML, TOML, CSV | Rust parsers and serializers |
 | Audio | MP3/MP2, WAV/W64, FLAC, OGG/OGA, M4A/M4B, AAC, Opus, WMA, AIFF/AIF/AIFC, AC3, E-AC3, DTS, MKA, CAF, WavPack, TTA, AU | MP3, WAV, FLAC, OGG, M4A, Opus | FFmpeg |
-| Video | MP4, MKV, WebM, AVI/DivX, MOV, WMV/ASF, FLV/F4V, M4V, MPG/MPEG, TS | MP4, MKV, WebM, AVI, MOV, GIF; MP3/WAV/M4A audio extraction | FFmpeg |
+| Video | MP4, MKV, WebM, AVI/DivX, MOV, WMV/ASF, FLV/F4V, M4V, MPG/MPEG/M2V, TS | MP4, MKV, WebM, AVI, MOV, GIF; MP3/WAV/M4A audio extraction | FFmpeg |
 
 Targets are restricted to each category. Extension recognition is case-insensitive, but it does not guarantee that a file's contents or codecs can be decoded. See the [format reference](docs/formats.md) for encoding presets and exact conversion rules.
 
