@@ -113,7 +113,7 @@ All audio target presets disable video with `-vn`:
 
 ## Video
 
-**Input extensions:** `mp4`, `mkv`, `webm`, `avi`, `divx`, `mov`, `wmv`, `asf`, `flv`, `f4v`, `m4v`, `mpg`, `mpeg`, `m2v`, `vob`, `ts`, `mts`, `m2ts`, `3gp`, `3g2`, `ogv`, `dv`.
+**Input extensions:** `mp4`, `mkv`, `webm`, `avi`, `divx`, `mov`, `wmv`, `asf`, `flv`, `f4v`, `m4v`, `mpg`, `mpeg`, `m2v`, `vob`, `ts`, `mts`, `m2ts`, `3gp`, `3g2`, `ogv`, `mxf`, `dv`.
 
 **Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `gif`, `mp3`, `wav`, `m4a`.
 
@@ -140,7 +140,7 @@ Paths and options are passed as separate process arguments, not interpolated int
 
 FFmpeg is the first `ffmpeg` (`ffmpeg.exe` on Windows) found in an **absolute** `PATH` entry that runs `-version` successfully. On macOS, Homebrew's `/opt/homebrew/bin` (Apple Silicon) and `/usr/local/bin` (Intel) are searched after `PATH`, since an app opened from Finder or the Dock gets only `/usr/bin:/bin:/usr/sbin:/sbin`. Relative `PATH` entries are skipped, and, unlike a plain process launch on Windows, the application's own folder is not searched, so an `ffmpeg.exe` placed next to ConvertCraft is never run implicitly.
 
-`DEMUXERS` is `aac,ac3,aiff,asf,au,avi,caf,dts,dv,eac3,flac,flv,matroska,mov,mp3,mpeg,mpegts,mpegvideo,ogg,tta,w64,wav,wv`, which covers every recognized audio/video input extension. Playlist and concatenation formats (HLS, ffconcat) are not on the list, so a "video" that is really a playlist cannot pull other local files into the output. Only the `file` protocol is allowed for input.
+`DEMUXERS` is `aac,ac3,aiff,asf,au,avi,caf,dts,dv,eac3,flac,flv,matroska,mov,mp3,mpeg,mpegts,mpegvideo,mxf,ogg,tta,w64,wav,wv`, which covers every recognized audio/video input extension. Playlist and concatenation formats (HLS, ffconcat) are not on the list, so a "video" that is really a playlist cannot pull other local files into the output. Only the `file` protocol is allowed for input.
 
 Jobs can be cancelled from the UI. A job is also stopped if FFmpeg reports no progress for 5 minutes. Only the last 64 KiB of FFmpeg's error output is kept.
 
