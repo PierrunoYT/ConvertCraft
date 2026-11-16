@@ -22,7 +22,7 @@ The source includes Windows, macOS, and Unix file-manager integration. Platform-
 - `src/theme.rs`: the light visual style: color palette, global egui style, card frames, and the tinted/primary button and pill helpers. Use its colors instead of hard-coding new ones.
 - `src/converter.rs`: extension/category detection, target defaults, image/data/media backends, and unit tests.
 - `src/output.rs`: batch input identity protection, destination planning, staged output publication, and filesystem regression tests.
-- `crates/file-id/`: `convertcraft-file-id`, a small Windows-only crate that safely wraps the one Win32 call std does not expose (`GetFileInformationByHandleEx` with `FileIdInfo`). It holds the project's only `unsafe` code, so the application crate can forbid it.
+- `crates/file-id/`: `convertcraft-file-id`, a small crate that safely wraps the two file-identity calls std does not expose: `GetFileInformationByHandleEx` with `FileIdInfo` on Windows and the `FS_IOC_GETVERSION` ioctl on Linux. It holds the project's only `unsafe` code, so the application crate can forbid it.
 - `assets/logos/`: transparent logo (`logo.png`) and light/dark previews (`logo-light.png`, `logo-dark.png`). Only `logo.png` is embedded and shared by the window icon, app header, empty queue, and README. The UI texture is uploaded once at startup and retained by `App`.
 - `docs/`: user-facing behavior and developer reference.
 
@@ -35,7 +35,7 @@ The project is a binary crate with internal `converter` and `output` modules, pl
 - `image`: image decoding, normalization, resizing, and encoding.
 - `serde_json`, `serde-saphyr`, `toml`, `csv`: structured data parsing and serialization.
 - `anyhow`: backend errors with context.
-- `tempfile`: owned staging files/directories. `convertcraft-file-id` (Windows) and `libc` (Unix): file identity keys and non-blocking source opens.
+- `tempfile`: owned staging files/directories. `convertcraft-file-id` (Windows and Linux) and `libc` (Unix): file identity keys and non-blocking source opens.
 - Standard-library threads, channels, locks, and subprocesses: job execution and FFmpeg integration.
 
 ## Conversion lifecycle
@@ -50,9 +50,11 @@ The project is a binary crate with internal `converter` and `output` modules, pl
 
 `App::start` snapshots the queue into a `Batch` and runs it on a background thread, so slow network shares or crowded output folders never freeze the window; the queue stays locked from that point. The batch first constructs an `OutputPlanner` protecting all queued inputs, including completed rows. It ignores completed rows for conversion and fails media rows when FFmpeg was not found; rows that cannot be planned finish immediately with their error. FFmpeg is located once on a background thread at startup (`converter::ffmpeg_path`); **Convert** stays disabled until that check finishes. For each remaining row, the planner chooses a source-adjacent or custom-directory path, adding numbered suffixes when needed, up to 10,000 attempts per job.
 
-The planner resolves parent directories, conservatively case-folds reserved names, and records each source's `FileKey` (device and inode on Unix; volume serial and 128-bit file ID on Windows). Keys are read and the file closed immediately, so a batch holds no open file per queued job. It protects input paths and hard-link identities, skips destination links/reparse points and special files, and records the key of any existing file selected for replacement.
+The planner resolves parent directories, conservatively case-folds reserved names, and records each source's `FileKey` (device, inode, and inode change time on Unix, plus the inode generation on Linux; volume serial and 128-bit file ID on Windows). Keys are read and the file closed immediately, so a batch holds no open file per queued job. It protects input paths and hard-link identities, skips destination links/reparse points and special files, and records the key of any existing file selected for replacement.
 
 `OutputPlanner::new` returns per-input errors instead of failing the batch: a source that cannot be inspected fails only its own row, and is ignored if that row is already done. Its names are still reserved so no output can take them.
+
+Linux file systems such as ext4 give a deleted file's inode number to the next new file, and kernels without fine-grained timestamps often give it the same change time, so a file deleted and recreated right after planning would otherwise match the old key. The inode generation (`FS_IOC_GETVERSION`, read in `crates/file-id` because the main crate forbids unsafe code) differs and is stored in the key's high 64 bits. It needs an open handle, so `FileKey::of_path` opens only regular files and directories, non-blocking; where the file cannot be opened or the file system has no generation, it is 0 and the key falls back to device, inode, and change time.
 
 Windows identities use the 128-bit `FILE_ID_INFO` ID rather than the 64-bit `nFileIndex`, which is not unique on ReFS. SMB shares backed by NTFS pass the same 128-bit ID through. A file system that cannot report a 128-bit ID, or reports 0 (some network and FAT redirectors), gives an unknown identity. Checks then fail safe: an existing destination with unknown identity is never replaced (a numbered name is used instead), and an existing file of unknown identity is treated as a possible source.
 
@@ -104,7 +106,7 @@ Each test owns a unique temporary directory that is cleaned up on completion. Th
 - `cargo test --locked --workspace` on Linux, Windows, and macOS with FFmpeg installed and both `CONVERTCRAFT_REQUIRE_*` variables set, so media and symlink tests cannot skip silently.
 - `cargo deny check` using [`deny.toml`](../deny.toml): RustSec advisories, license allowlist, crates.io-only sources. Each ignored advisory names its reason.
 
-The application crate root declares `#![forbid(unsafe_code)]`; the only `unsafe` code is the documented Win32 call in `crates/file-id`.
+The application crate root declares `#![forbid(unsafe_code)]`; the only `unsafe` code is the documented Win32 call and Linux ioctl in `crates/file-id`.
 
 ## Extending the converter
 

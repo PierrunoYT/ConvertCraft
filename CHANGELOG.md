@@ -48,6 +48,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 - The FFmpeg availability check runs on a background thread instead of blocking startup (#24).
 - Batches no longer keep two open handles per queued job: source and destination identities are stored as keys, so large batches no longer run into the Unix open-file limit (#17).
 - A missing, unreadable, or non-regular source fails only its own row instead of the whole batch; completed rows whose sources were deleted no longer block new conversions (#16).
+- On Linux, a source or existing destination deleted and recreated right after planning is now detected. ext4 reuses the inode number and, on kernels without fine-grained timestamps (such as Linux 6.1), often the change time, so the file key now includes the inode generation. The two identity tests failed about half the time on such kernels.
 - File systems that report no file ID are detected, and overwrite then uses a numbered name instead of replacing a file it cannot re-identify (#26).
 - Sources are opened once and re-identified before conversion, so a file or FIFO swapped in after planning is rejected instead of converted or blocking a worker (#27).
 - Images over 100 megapixels are rejected before decoding, and concurrent image jobs share a 1.5 GiB memory budget; a 260 KB PNG could previously drive one conversion to 1.35 GB of memory and a 1 GiB output (#14).

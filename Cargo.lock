@@ -765,6 +765,7 @@ dependencies = [
 name = "convertcraft-file-id"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "tempfile",
  "windows-sys 0.61.2",
 ]

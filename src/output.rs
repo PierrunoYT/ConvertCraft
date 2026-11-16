@@ -17,12 +17,15 @@ const MAX_NAME_ATTEMPTS: usize = 10_000;
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct FileKey {
     volume: u64,
-    /// Unix inode number, or the Windows 128-bit file ID. The 64-bit `nFileIndex` is
-    /// not unique on ReFS and may be zero or reused on network and FAT redirectors.
+    /// Unix inode number, with the Linux inode generation in the high 64 bits, or the
+    /// Windows 128-bit file ID. The 64-bit `nFileIndex` is not unique on ReFS and may
+    /// be zero or reused on network and FAT redirectors.
     index: u128,
     /// Unix inode change time in nanoseconds (0 on Windows). Without an open handle an
-    /// inode number can be reused by a new file right after deletion; the new file has
-    /// a fresh change time. NTFS file IDs already carry a reuse sequence number.
+    /// inode number can be reused by a new file right after deletion. Kernels without
+    /// fine-grained timestamps can give the new file the same change time, so Linux
+    /// also keys on the inode generation; NTFS file IDs already carry a reuse sequence
+    /// number.
     changed: i64,
 }
 
@@ -42,14 +45,17 @@ impl FileKey {
         self.volume == other.volume && self.index == other.index
     }
 
+    /// `generation` is 0 where it cannot be read: off Linux, on file systems without
+    /// `FS_IOC_GETVERSION`, and for files that cannot be opened.
     #[cfg(unix)]
-    fn from_metadata(metadata: &Metadata) -> Option<Self> {
+    fn from_metadata(metadata: &Metadata, generation: u64) -> Option<Self> {
         use std::os::unix::fs::MetadataExt;
         let changed = metadata
             .ctime()
             .saturating_mul(1_000_000_000)
             .saturating_add(metadata.ctime_nsec());
-        Self::new(metadata.dev(), metadata.ino().into(), changed)
+        let index = (u128::from(generation) << 64) | u128::from(metadata.ino());
+        Self::new(metadata.dev(), index, changed)
     }
 
     /// A file system that cannot report a 128-bit file ID gets no identity, so
@@ -63,7 +69,21 @@ impl FileKey {
     fn of_path(path: &Path) -> io::Result<Option<Self>> {
         #[cfg(unix)]
         {
-            Ok(Self::from_metadata(&fs::metadata(path)?))
+            let metadata = fs::metadata(path)?;
+            // The Linux generation needs a handle. Open only regular files and
+            // directories, never device nodes, and never block on a FIFO swapped in.
+            #[cfg(target_os = "linux")]
+            if metadata.is_file() || metadata.is_dir() {
+                use std::os::unix::fs::OpenOptionsExt;
+                if let Ok(file) = fs::OpenOptions::new()
+                    .read(true)
+                    .custom_flags(libc::O_NONBLOCK)
+                    .open(path)
+                {
+                    return Self::of_file(&file);
+                }
+            }
+            Ok(Self::from_metadata(&metadata, 0))
         }
         #[cfg(windows)]
         {
@@ -81,7 +101,11 @@ impl FileKey {
     fn of_file(file: &File) -> io::Result<Option<Self>> {
         #[cfg(unix)]
         {
-            Ok(Self::from_metadata(&file.metadata()?))
+            #[cfg(target_os = "linux")]
+            let generation = convertcraft_file_id::generation(file).unwrap_or(0);
+            #[cfg(not(target_os = "linux"))]
+            let generation = 0;
+            Ok(Self::from_metadata(&file.metadata()?, generation))
         }
         #[cfg(windows)]
         {
