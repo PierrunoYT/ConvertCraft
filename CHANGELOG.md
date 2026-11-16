@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- M4B audiobook input.
 - OGA (Ogg audio) input.
 - Sony Wave64 (`.w64`) audio input.
 - MP2 audio input.
