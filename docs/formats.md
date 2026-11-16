@@ -115,14 +115,14 @@ All audio target presets disable video with `-vn`:
 
 **Input extensions:** `mp4`, `mkv`, `webm`, `avi`, `divx`, `mov`, `wmv`, `asf`, `flv`, `f4v`, `m4v`, `mpg`, `mpeg`, `m2v`, `vob`, `ts`, `mts`, `m2ts`, `3gp`, `3g2`, `ogv`, `mxf`, `rm`, `rmvb`, `dv`, `y4m`.
 
-**Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `gif`, `mp3`, `wav`, `m4a`.
+**Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `gif`, plus every audio target above for audio extraction.
 
 - **MP4/MOV:** `libx264`, preset `medium`, CRF `23`, pixel format `yuv420p`; AAC at `160k`; `+faststart`.
 - **MKV:** `libx264`, CRF `23`; AAC at `160k`.
 - **WebM:** `libvpx-vp9`, CRF `32`, video bitrate `0`; `libopus` audio.
 - **AVI:** `mpeg4`, video quality `5`; `libmp3lame`, audio quality `4`.
 - **GIF:** no audio; 12 fps; width capped at 480 pixels with Lanczos scaling and an automatically computed even height; palette generation/use; infinite looping.
-- **MP3/WAV/M4A:** use the audio presets above to extract audio.
+- **Audio targets:** use the audio presets above to extract the audio track.
 
 These presets re-encode rather than requesting stream copying. There are no UI controls for bitrate, resolution, stream selection, trimming, subtitles, or codec choice. FFmpeg's default stream-selection behavior applies because no explicit `-map` is supplied.
 

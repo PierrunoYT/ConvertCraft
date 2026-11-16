@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- Video files can extract audio to FLAC, OGG, and Opus, not only MP3, WAV, and M4A.
 - YUV4MPEG (`.y4m`) video input.
 - RealMedia (`.rm`, `.rmvb`) video input.
 - MXF video input.

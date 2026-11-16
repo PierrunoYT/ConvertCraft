@@ -60,7 +60,8 @@ impl Category {
             Category::Data => &["json", "yaml", "toml", "csv"],
             Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus"],
             Category::Video => &[
-                "mp4", "mkv", "webm", "avi", "mov", "gif", "mp3", "wav", "m4a",
+                "mp4", "mkv", "webm", "avi", "mov", "gif", "mp3", "wav", "flac", "ogg", "m4a",
+                "opus",
             ],
         }
     }
