@@ -17,6 +17,7 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use image::{
     DynamicImage, ImageDecoder, ImageFormat, codecs::jpeg::JpegEncoder, imageops::FilterType,
+    metadata::Orientation,
 };
 use serde::de::{self, DeserializeSeed, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde_json::{Map, Value};
@@ -248,7 +249,7 @@ fn convert_image(
         INPUT_IMAGE_FORMATS.contains(&format),
         "unsupported image format: {format:?}"
     );
-    let decoder = reader.into_decoder().context("cannot decode image")?;
+    let mut decoder = reader.into_decoder().context("cannot decode image")?;
     let (width, height) = decoder.dimensions();
     let pixels = u64::from(width) * u64::from(height);
     ensure!(
@@ -258,7 +259,11 @@ fn convert_image(
     );
     // Decoded buffer plus the 8-bit RGB(A) copy made before encoding.
     let _memory = IMAGE_MEMORY.reserve(decoder.total_bytes().saturating_add(pixels * 4));
-    let img = DynamicImage::from_decoder(decoder).context("cannot decode image")?;
+    // Cameras store rotation as EXIF metadata; bake it into the pixels, since outputs
+    // carry no metadata. Unreadable EXIF is ignored rather than failing the conversion.
+    let orientation = decoder.orientation().unwrap_or(Orientation::NoTransforms);
+    let mut img = DynamicImage::from_decoder(decoder).context("cannot decode image")?;
+    img.apply_orientation(orientation);
 
     let mut writer = BufWriter::new(output);
     match target {
@@ -946,6 +951,34 @@ mod tests {
                 .unwrap_or_else(|e| panic!("{t}: {e:#}"));
             image::open(&out).unwrap_or_else(|e| panic!("reopen {t}: {e}"));
         }
+    }
+
+    #[test]
+    fn exif_orientation_is_applied() {
+        use image::ImageEncoder;
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("rotated.png");
+        // Big-endian TIFF header + one IFD entry: Orientation (0x0112) = 6, rotate 90° CW.
+        let exif = [
+            b'M', b'M', 0, 42, 0, 0, 0, 8, 0, 1, 0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, 6, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ];
+        let pixels = image::RgbImage::from_fn(4, 2, |x, _| image::Rgb([x as u8 * 60, 0, 0]));
+        let mut encoder = image::codecs::png::PngEncoder::new(File::create(&src).unwrap());
+        encoder.set_exif_metadata(exif.to_vec()).unwrap();
+        encoder
+            .write_image(pixels.as_raw(), 4, 2, image::ExtendedColorType::Rgb8)
+            .unwrap();
+        let out = convert_to(
+            &src,
+            dir.path(),
+            Category::Image,
+            "bmp",
+            &Options::default(),
+        )
+        .unwrap();
+        let out = image::open(out).unwrap();
+        assert_eq!((out.width(), out.height()), (2, 4));
     }
 
     /// A BMP header declaring `width`x`height` pixels, with no pixel data.
