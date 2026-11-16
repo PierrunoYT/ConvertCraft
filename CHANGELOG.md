@@ -1,4 +1,5 @@
 # Changelog
+- README: note that ConvertCraft is one of Pierruno's open-source desktop apps, linking to https://pierruno.dev/.
 
 This changelog records the current implementation. `Cargo.toml` declares version `0.1.0`, but the repository has no commits or release tags from which to establish a release date or historical changes.
 

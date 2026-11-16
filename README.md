@@ -1,6 +1,8 @@
 <p align="center">
   <img src="assets/logos/logo.png" alt="ConvertCraft — orange and blue conversion arrows forming a C" width="160" height="160">
 </p>
+ConvertCraft is one of the open-source desktop apps from [Pierruno](https://pierruno.dev/).
+
 
 <h1 align="center">ConvertCraft</h1>
 
