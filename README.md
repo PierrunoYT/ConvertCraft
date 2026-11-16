@@ -57,7 +57,7 @@ sudo apt-get update
 sudo apt-get install build-essential pkg-config libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libgl1-mesa-dev
 ```
 
-Linux file pickers use the desktop's XDG portal service. If dialogs do not open, check that `xdg-desktop-portal` and the backend appropriate for your desktop are installed and running.
+Linux file pickers use the desktop's XDG portal service and fall back to `zenity` when no portal is available. If **Add files…** or **Add folder…** does nothing, install `xdg-desktop-portal` with the backend for your desktop, or install `zenity` (`sudo apt-get install zenity`). ConvertCraft runs natively on both X11 and Wayland.
 
 ### Enable audio and video
 

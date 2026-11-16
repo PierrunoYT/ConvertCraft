@@ -65,6 +65,10 @@ To reconvert a completed source, remove its row and add it again. Changing a com
 
 Run `ffmpeg -version` in the launch environment and restart ConvertCraft. A successful availability check does not guarantee that codecs such as `libx264`, `libvpx-vp9`, `libmp3lame`, `libvorbis`, or `libopus` are installed. Inspect `ffmpeg -encoders` if conversion reports a missing encoder. Audio extraction also requires an audio stream in the source.
 
+### File dialogs do not open on Linux
+
+The file and folder pickers use the XDG desktop portal and fall back to `zenity`. Window managers without a portal, such as a bare i3 or sway session, need either `xdg-desktop-portal` with a GTK, GNOME, or KDE backend, or `zenity`. Drag and drop works without either.
+
 ### A file is skipped or fails to decode
 
 Category selection uses the filename extension, not content inspection. Check the [recognized extensions](formats.md) and make sure the contents match a supported format. Renaming an extension alone does not convert a file.
