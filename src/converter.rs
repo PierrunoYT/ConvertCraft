@@ -52,7 +52,7 @@ impl Category {
     pub fn targets(self) -> &'static [&'static str] {
         match self {
             Category::Image => &[
-                "png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "tga", "qoi",
+                "png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "tga", "qoi", "pnm",
             ],
             Category::Data => &["json", "yaml", "toml", "csv"],
             Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus"],
@@ -314,6 +314,7 @@ fn convert_image(
                 "tiff" => ImageFormat::Tiff,
                 "tga" => ImageFormat::Tga,
                 "qoi" => ImageFormat::Qoi,
+                "pnm" => ImageFormat::Pnm,
                 other => bail!("unsupported image target: {other}"),
             };
             encoder_layout(img, target).write_to(&mut writer, format)?;
@@ -371,8 +372,9 @@ fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
     let (gray, alpha) = (!color.has_color(), color.has_alpha());
     let deep = color.bytes_per_pixel() > color.channel_count();
     match target {
-        // TIFF stores 16-bit samples but has no gray+alpha layout in `image`.
-        "tiff" if deep => match (gray, alpha) {
+        // TIFF and PNM (written as PAM) store 16-bit samples but have no 16-bit
+        // gray+alpha layout in `image`.
+        "tiff" | "pnm" if deep => match (gray, alpha) {
             (true, false) => DynamicImage::ImageLuma16(img.into_luma16()),
             (false, false) => DynamicImage::ImageRgb16(img.into_rgb16()),
             (_, true) => DynamicImage::ImageRgba16(img.into_rgba16()),
@@ -383,7 +385,7 @@ fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
         // QOI has only RGB and RGBA.
         "qoi" if alpha => DynamicImage::ImageRgba8(img.into_rgba8()),
         "qoi" => DynamicImage::ImageRgb8(img.into_rgb8()),
-        // BMP, TGA, WebP and 8-bit TIFF accept every 8-bit layout.
+        // BMP, TGA, WebP, PNM and 8-bit TIFF accept every 8-bit layout.
         _ => match (gray, alpha) {
             (true, false) => DynamicImage::ImageLuma8(img.into_luma8()),
             (true, true) => DynamicImage::ImageLumaA8(img.into_luma_alpha8()),
@@ -1098,9 +1100,11 @@ mod tests {
                     .unwrap_or_else(|e| panic!("reopen {name} -> {t}: {e}"))
                     .color();
                 let expected = match (name, t) {
-                    ("gray16.png", "tiff") => Some(ColorType::L16),
-                    ("rgb.png", "bmp" | "tiff" | "qoi" | "tga" | "webp") => Some(ColorType::Rgb8),
-                    ("gray_alpha.png", "tga") => Some(ColorType::La8),
+                    ("gray16.png", "tiff" | "pnm") => Some(ColorType::L16),
+                    ("rgb.png", "bmp" | "tiff" | "qoi" | "tga" | "webp" | "pnm") => {
+                        Some(ColorType::Rgb8)
+                    }
+                    ("gray_alpha.png", "tga" | "pnm") => Some(ColorType::La8),
                     _ => None,
                 };
                 if let Some(expected) = expected {

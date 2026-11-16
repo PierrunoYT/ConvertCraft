@@ -6,7 +6,7 @@ The extension lists and targets below come from `Category::targets` and `detect`
 
 **Input extensions:** `png`, `jpg`, `jpeg`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`.
 
-**Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`.
+**Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`.
 
 The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as OpenEXR, HDR, or DDS, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft.
 
@@ -18,13 +18,14 @@ An EXIF orientation tag (set by cameras and phones for rotated shots) is applied
 
 - **JPG:** converts to 8-bit RGB and encodes at the selected quality (90 by default). JPEG has no transparency, so transparent and semi-transparent pixels are composited over white.
 - **PNG:** saves the decoded image as-is, keeping its channels and 8- or 16-bit depth.
-- **TIFF:** keeps 16-bit depth for 16-bit inputs (grayscale, RGB, or RGBA); gray+alpha is stored as RGBA.
+- **TIFF, PNM:** keep 16-bit depth for 16-bit inputs (grayscale, RGB, or RGBA); 16-bit gray+alpha is stored as RGBA. TIFF also stores 8-bit gray+alpha as RGBA.
+- **PNM:** written as PAM (`P7`), which holds every channel layout including alpha. Tools that only read PBM/PGM/PPM may not open it.
 - **ICO:** fits the image within 256×256 (or the smaller **Shrink images to fit** limits) while preserving aspect ratio, using Lanczos3 filtering, and adds 48, 32, and 16 pixel versions when they are smaller, so Windows has a sharp icon for each view.
-- **BMP, TGA, WebP:** keep the input's channel layout at 8 bits (grayscale, gray+alpha, RGB, or RGBA); no alpha channel is added to opaque images.
+- **BMP, TGA, WebP, PNM:** keep the input's channel layout at 8 bits (grayscale, gray+alpha, RGB, or RGBA); no alpha channel is added to opaque images.
 - **QOI:** RGB for opaque inputs, RGBA otherwise.
 - **GIF:** converts to 8-bit RGBA and quantizes to a 256-color palette.
 
-There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; only PNG and TIFF keep 16-bit depth.
+There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; only PNG, TIFF, and PNM keep 16-bit depth.
 
 ## Structured data
 
