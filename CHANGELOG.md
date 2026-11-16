@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 - `CONVERTCRAFT_REQUIRE_FFMPEG` / `CONVERTCRAFT_REQUIRE_SYMLINKS` test switches that turn skipped media/symlink tests into failures.
 - ConvertCraft desktop interface built with egui/eframe.
 - Supplied logo embedded as the window icon and displayed in the README.
+- Logo embedded as the Windows executable icon (Explorer, taskbar, shortcuts) via `build.rs`.
 - File selection, recursive folder import, drag-and-drop, and duplicate-path filtering.
 - Image conversion to PNG, JPG, WebP, BMP, GIF, TIFF, ICO, TGA, and QOI, including JPEG quality control and ICO resizing.
 - JSON, YAML, TOML, and CSV conversion, including CSV scalar inference and TOML wrapping for non-object roots.

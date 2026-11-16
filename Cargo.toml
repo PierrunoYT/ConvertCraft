@@ -29,3 +29,7 @@ libc = "0.2"
 
 [target.'cfg(windows)'.dependencies]
 convertcraft-file-id = { path = "crates/file-id", version = "0.1" }
+
+[target.'cfg(windows)'.build-dependencies]
+image = { version = "0.25", default-features = false, features = ["ico", "png"] }
+winresource = "0.1"
