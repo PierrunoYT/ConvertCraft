@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- AC3 (Dolby Digital) audio input.
 - AIFC audio input.
 - M4B audiobook input.
 - OGA (Ogg audio) input.
