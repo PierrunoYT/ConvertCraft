@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- MKA (Matroska audio) input.
 - DTS audio input.
 - E-AC3 (Dolby Digital Plus) audio input.
 - AC3 (Dolby Digital) audio input.

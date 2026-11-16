@@ -84,7 +84,7 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "dds" => Category::Image,
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
         "mp3" | "mp2" | "wav" | "w64" | "flac" | "ogg" | "oga" | "m4a" | "m4b" | "aac" | "opus"
-        | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" => Category::Audio,
+        | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" => Category::Audio,
         "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg" | "ts" => {
             Category::Video
         }
@@ -1752,7 +1752,7 @@ mod tests {
             "mpg" | "mpeg" => &["-c:v", "mpeg2video", "-c:a", "mp2"],
             "dts" => &["-c:a", "dca", "-strict", "-2"],
             "mp2" => &["-c:a", "mp2"],
-            "oga" => &["-c:a", "flac"],
+            "mka" | "oga" => &["-c:a", "flac"],
             _ => &[],
         };
         cmd.args(codecs);
@@ -1770,8 +1770,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         for ext in [
             "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "m4b", "aac", "opus", "wma",
-            "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mp4", "mkv", "webm", "avi", "mov", "wmv",
-            "flv", "m4v", "mpg", "mpeg", "ts",
+            "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "mp4", "mkv", "webm", "avi", "mov",
+            "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();
