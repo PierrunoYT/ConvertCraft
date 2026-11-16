@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- OpenEXR image input and output (32-bit float RGB or RGBA).
 - Radiance HDR image input and output. Float images become 16-bit when saved as PNG and are clipped without tone mapping in 8- and 16-bit formats.
 - `.jfif`, `.pam`, and `.apng` image inputs; APNG converts its first frame.
 - PNM image output, written as PAM (`P7`) and keeping 16-bit depth.

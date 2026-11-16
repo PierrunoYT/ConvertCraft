@@ -53,6 +53,7 @@ impl Category {
         match self {
             Category::Image => &[
                 "png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "tga", "qoi", "pnm", "hdr",
+                "exr",
             ],
             Category::Data => &["json", "yaml", "toml", "csv"],
             Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus"],
@@ -77,7 +78,9 @@ pub fn extension(path: &Path) -> String {
 pub fn detect(path: &Path) -> Option<Category> {
     let cat = match extension(path).as_str() {
         "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
-        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" => Category::Image,
+        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr" => {
+            Category::Image
+        }
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
         "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
             Category::Audio
@@ -171,7 +174,7 @@ const MAX_IMAGE_PIXELS: u64 = 100_000_000;
 /// Estimated memory shared by all concurrent image jobs.
 const IMAGE_MEMORY_BUDGET: u64 = 1536 * 1024 * 1024;
 /// Decoders accepted after content sniffing; matches the extensions in `detect`.
-const INPUT_IMAGE_FORMATS: [ImageFormat; 11] = [
+const INPUT_IMAGE_FORMATS: [ImageFormat; 12] = [
     ImageFormat::Png,
     ImageFormat::Jpeg,
     ImageFormat::WebP,
@@ -183,6 +186,7 @@ const INPUT_IMAGE_FORMATS: [ImageFormat; 11] = [
     ImageFormat::Qoi,
     ImageFormat::Pnm,
     ImageFormat::Hdr,
+    ImageFormat::OpenExr,
 ];
 
 static IMAGE_MEMORY: MemoryBudget = MemoryBudget::new(IMAGE_MEMORY_BUDGET);
@@ -286,10 +290,10 @@ fn convert_image(
     let fitted = max.and_then(|(w, h)| fit_within(shown_width, shown_height, w, h));
 
     // Decoded buffer, the copy in the encoder's layout (up to 32-bit float RGBA for
-    // HDR), a rotated copy, and the resize's f32 RGBA intermediate (source
+    // HDR/EXR), a rotated copy, and the resize's f32 RGBA intermediate (source
     // width × new height) plus its result.
     let copy_bytes = match target {
-        "hdr" => 16,
+        "hdr" | "exr" => 16,
         _ => 4,
     };
     let mut memory = decoder.total_bytes().saturating_add(pixels * copy_bytes);
@@ -324,6 +328,7 @@ fn convert_image(
                 "qoi" => ImageFormat::Qoi,
                 "pnm" => ImageFormat::Pnm,
                 "hdr" => ImageFormat::Hdr,
+                "exr" => ImageFormat::OpenExr,
                 other => bail!("unsupported image target: {other}"),
             };
             encoder_layout(img, target).write_to(&mut writer, format)?;
@@ -382,9 +387,11 @@ fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
     let bytes_per_sample = color.bytes_per_pixel() / color.channel_count();
     let deep = bytes_per_sample > 1;
     match target {
-        // HDR stores float RGB samples without alpha.
+        // HDR and EXR store float samples; HDR has no alpha.
         "hdr" => DynamicImage::ImageRgb32F(img.into_rgb32f()),
-        // PNG keeps 8- and 16-bit layouts as-is; float (HDR) becomes 16-bit.
+        "exr" if alpha => DynamicImage::ImageRgba32F(img.into_rgba32f()),
+        "exr" => DynamicImage::ImageRgb32F(img.into_rgb32f()),
+        // PNG keeps 8- and 16-bit layouts as-is; float (HDR, EXR) becomes 16-bit.
         "png" if bytes_per_sample == 4 && alpha => DynamicImage::ImageRgba16(img.into_rgba16()),
         "png" if bytes_per_sample == 4 => DynamicImage::ImageRgb16(img.into_rgb16()),
         "png" => img,
@@ -1304,8 +1311,8 @@ mod tests {
     fn undeclared_image_formats_are_rejected() {
         let dir = tempfile::tempdir().unwrap();
         let src = dir.path().join("photo.png");
-        // OpenEXR magic number followed by junk.
-        std::fs::write(&src, [0x76, 0x2f, 0x31, 0x01, 2, 0, 0, 0, 0, 0]).unwrap();
+        // AVIF file-type box followed by junk; no AVIF decoder is built in.
+        std::fs::write(&src, b"\0\0\0\x1cftypavif\0\0\0\0junk").unwrap();
         let error = convert_to(
             &src,
             dir.path(),
@@ -1315,8 +1322,51 @@ mod tests {
         )
         .unwrap_err();
         assert!(
-            format!("{error:#}").contains("unsupported image format: OpenExr"),
+            format!("{error:#}").contains("unsupported image format: Avif"),
             "{error:#}"
+        );
+    }
+
+    #[test]
+    fn float_images_round_trip_through_hdr_and_exr() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("src.png");
+        image::RgbImage::from_fn(16, 8, |x, y| image::Rgb([x as u8 * 16, y as u8 * 32, 200]))
+            .save(&src)
+            .unwrap();
+        let hdr = convert_to(
+            &src,
+            dir.path(),
+            Category::Image,
+            "hdr",
+            &Options::default(),
+        )
+        .unwrap();
+        let exr = convert_to(
+            &hdr,
+            dir.path(),
+            Category::Image,
+            "exr",
+            &Options::default(),
+        )
+        .unwrap();
+        assert_eq!(image::open(&exr).unwrap().color(), image::ColorType::Rgb32F);
+        let png = convert_to(
+            &exr,
+            dir.path(),
+            Category::Image,
+            "png",
+            &Options::default(),
+        )
+        .unwrap();
+        let back = image::open(&png).unwrap();
+        assert_eq!(back.color(), image::ColorType::Rgb16);
+        let (a, b) = (image::open(&src).unwrap().to_rgb8(), back.to_rgb8());
+        // RGBE stores a shared exponent, so values come back approximately.
+        assert!(
+            a.pixels()
+                .zip(b.pixels())
+                .all(|(p, q)| { p.0.iter().zip(q.0).all(|(&x, y)| x.abs_diff(y) <= 2) })
         );
     }
 

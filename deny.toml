@@ -18,6 +18,9 @@ ignore = [
     { id = "RUSTSEC-2026-0370", reason = "zvariant, via eframe's Linux accessibility stack; unmaintained, no fix upstream" },
     { id = "RUSTSEC-2026-0371", reason = "zbus_names, via eframe's Linux accessibility stack; unmaintained, no fix upstream" },
     { id = "RUSTSEC-2026-0372", reason = "zvariant_derive, via eframe's Linux accessibility stack; unmaintained, no fix upstream" },
+    # Unmaintained (no known vulnerability) proc-macro pulled in by the `image` crate's
+    # OpenEXR decoder (exr -> pulp). Recheck on every image/exr upgrade.
+    { id = "RUSTSEC-2024-0436", reason = "paste, via image's exr feature (exr -> pulp); unmaintained proc-macro, no fix upstream" },
 ]
 
 [licenses]
