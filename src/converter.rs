@@ -301,10 +301,24 @@ fn convert_image(
 fn encode_jpeg(image: &DynamicImage, writer: &mut impl Write, quality: u8) -> Result<()> {
     {
         let mut encoder = JpegEncoder::new_with_quality(&mut *writer, quality);
-        encoder.encode_image(&DynamicImage::ImageRgb8(image.to_rgb8()))?;
+        encoder.encode_image(&DynamicImage::ImageRgb8(flatten_on_white(image)))?;
     }
     writer.flush().context("cannot flush JPEG output")?;
     Ok(())
+}
+
+/// JPEG has no alpha. Dropping it would expose whatever color sits under transparent
+/// pixels (often black), so composite over white like image viewers and browsers do.
+fn flatten_on_white(image: &DynamicImage) -> image::RgbImage {
+    if !image.color().has_alpha() {
+        return image.to_rgb8();
+    }
+    image::RgbImage::from_fn(image.width(), image.height(), |x, y| {
+        let [r, g, b, a] = image::GenericImageView::get_pixel(image, x, y).0;
+        let a = u16::from(a);
+        let over_white = |c: u8| ((u16::from(c) * a + 255 * (255 - a) + 127) / 255) as u8;
+        image::Rgb([over_white(r), over_white(g), over_white(b)])
+    })
 }
 
 // ---------------------------------------------------------------- data
@@ -951,6 +965,44 @@ mod tests {
                 .unwrap_or_else(|e| panic!("{t}: {e:#}"));
             image::open(&out).unwrap_or_else(|e| panic!("reopen {t}: {e}"));
         }
+    }
+
+    #[test]
+    fn jpeg_puts_transparency_on_white() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("logo.png");
+        // Left half fully transparent black, right half opaque red.
+        image::RgbaImage::from_fn(16, 16, |x, _| {
+            if x < 8 {
+                image::Rgba([0, 0, 0, 0])
+            } else {
+                image::Rgba([255, 0, 0, 255])
+            }
+        })
+        .save(&src)
+        .unwrap();
+        let out = convert_to(
+            &src,
+            dir.path(),
+            Category::Image,
+            "jpg",
+            &Options::default(),
+        )
+        .unwrap();
+        let out = image::open(out).unwrap().into_rgb8();
+        let near = |p: image::Rgb<u8>, want: [u8; 3]| {
+            p.0.iter().zip(want).all(|(&a, b)| a.abs_diff(b) < 16)
+        };
+        assert!(
+            near(*out.get_pixel(2, 8), [255, 255, 255]),
+            "{:?}",
+            out.get_pixel(2, 8)
+        );
+        assert!(
+            near(*out.get_pixel(13, 8), [255, 0, 0]),
+            "{:?}",
+            out.get_pixel(13, 8)
+        );
     }
 
     #[test]

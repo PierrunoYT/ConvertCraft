@@ -14,7 +14,7 @@ Images larger than **100 megapixels** (for example 10,000×10,000) are rejected 
 
 An EXIF orientation tag (set by cameras and phones for rotated shots) is applied to the pixels, so the output displays upright even though the metadata itself is not copied.
 
-- **JPG:** converts to 8-bit RGB and encodes at the selected quality (90 by default). Alpha is discarded, not composited over a configurable background.
+- **JPG:** converts to 8-bit RGB and encodes at the selected quality (90 by default). JPEG has no transparency, so transparent and semi-transparent pixels are composited over white.
 - **PNG:** saves the decoded image as PNG without the explicit RGBA8 normalization used by the other non-JPEG targets.
 - **ICO:** resizes images exceeding 256 pixels in either dimension to fit within 256×256 while preserving aspect ratio, using Lanczos3 filtering.
 - **Other targets:** normalize to 8-bit RGBA before saving. Target encoders may further restrict color or transparency.
