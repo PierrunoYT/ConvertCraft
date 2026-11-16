@@ -19,7 +19,7 @@ An EXIF orientation tag (set by cameras and phones for rotated shots) is applied
 - **JPG:** converts to 8-bit RGB and encodes at the selected quality (90 by default). JPEG has no transparency, so transparent and semi-transparent pixels are composited over white.
 - **PNG:** saves the decoded image as-is, keeping its channels and 8- or 16-bit depth.
 - **TIFF:** keeps 16-bit depth for 16-bit inputs (grayscale, RGB, or RGBA); gray+alpha is stored as RGBA.
-- **ICO:** fits the image within 256×256 (or the smaller **Shrink images to fit** limits) while preserving aspect ratio, using Lanczos3 filtering.
+- **ICO:** fits the image within 256×256 (or the smaller **Shrink images to fit** limits) while preserving aspect ratio, using Lanczos3 filtering, and adds 48, 32, and 16 pixel versions when they are smaller, so Windows has a sharp icon for each view.
 - **BMP, TGA, WebP:** keep the input's channel layout at 8 bits (grayscale, gray+alpha, RGB, or RGBA); no alpha channel is added to opaque images.
 - **QOI:** RGB for opaque inputs, RGBA otherwise.
 - **GIF:** converts to 8-bit RGBA and quantizes to a 256-color palette.

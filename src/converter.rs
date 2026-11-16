@@ -305,9 +305,9 @@ fn convert_image(
             encode_jpeg(&img, &mut writer, opts.jpeg_quality)?;
         }
         "png" => img.write_to(&mut writer, ImageFormat::Png)?,
+        "ico" => encode_ico(img, &mut writer)?,
         _ => {
             let format = match target {
-                "ico" => ImageFormat::Ico,
                 "webp" => ImageFormat::WebP,
                 "bmp" => ImageFormat::Bmp,
                 "gif" => ImageFormat::Gif,
@@ -320,6 +320,34 @@ fn convert_image(
         }
     }
     writer.flush().context("cannot flush image output")?;
+    Ok(())
+}
+
+/// Standard icon sizes Windows picks from for lists, title bars, and the taskbar.
+const ICO_SMALL_SIZES: [u32; 3] = [48, 32, 16];
+
+/// Writes the image (already fitted within 256×256) plus every smaller standard size,
+/// so Windows shows a downscaled icon instead of shrinking the large one itself.
+fn encode_ico(img: DynamicImage, writer: &mut impl Write) -> Result<()> {
+    use image::codecs::ico::{IcoEncoder, IcoFrame};
+    let img = img.into_rgba8();
+    let (width, height) = img.dimensions();
+    let frame = |pixels: &image::RgbaImage| {
+        let (w, h) = pixels.dimensions();
+        IcoFrame::as_png(pixels.as_raw(), w, h, image::ExtendedColorType::Rgba8)
+    };
+    let mut frames = vec![frame(&img)?];
+    for size in ICO_SMALL_SIZES {
+        if let Some((w, h)) = fit_within(width, height, size, size) {
+            frames.push(frame(&image::imageops::resize(
+                &img,
+                w,
+                h,
+                FilterType::Lanczos3,
+            ))?);
+        }
+    }
+    IcoEncoder::new(writer).encode_images(&frames)?;
     Ok(())
 }
 
@@ -350,8 +378,8 @@ fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
             (_, true) => DynamicImage::ImageRgba16(img.into_rgba16()),
         },
         "tiff" if gray && alpha => DynamicImage::ImageRgba8(img.into_rgba8()),
-        // GIF quantizes from RGBA; ICO entries are stored as RGBA.
-        "gif" | "ico" => DynamicImage::ImageRgba8(img.into_rgba8()),
+        // GIF quantizes from RGBA.
+        "gif" => DynamicImage::ImageRgba8(img.into_rgba8()),
         // QOI has only RGB and RGBA.
         "qoi" if alpha => DynamicImage::ImageRgba8(img.into_rgba8()),
         "qoi" => DynamicImage::ImageRgb8(img.into_rgb8()),
@@ -1148,6 +1176,39 @@ mod tests {
         .unwrap();
         let out = image::open(out).unwrap();
         assert_eq!((out.width(), out.height()), (2, 4));
+    }
+
+    #[test]
+    fn ico_contains_standard_sizes() {
+        let dir = tempfile::tempdir().unwrap();
+        let sizes = |name: &str, width: u32, height: u32| {
+            let src = dir.path().join(name);
+            image::RgbaImage::new(width, height).save(&src).unwrap();
+            let out = convert_to(
+                &src,
+                dir.path(),
+                Category::Image,
+                "ico",
+                &Options::default(),
+            )
+            .unwrap();
+            let ico = std::fs::read(out).unwrap();
+            let count = usize::from(u16::from_le_bytes([ico[4], ico[5]]));
+            // ICONDIRENTRY width/height bytes; 0 means 256.
+            let side = |b: u8| if b == 0 { 256 } else { u32::from(b) };
+            (0..count)
+                .map(|i| (side(ico[6 + i * 16]), side(ico[7 + i * 16])))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            sizes("big.png", 512, 512),
+            [(256, 256), (48, 48), (32, 32), (16, 16)]
+        );
+        assert_eq!(
+            sizes("wide.png", 600, 300),
+            [(256, 128), (48, 24), (32, 16), (16, 8)]
+        );
+        assert_eq!(sizes("small.png", 40, 40), [(40, 40), (32, 32), (16, 16)]);
     }
 
     #[test]
