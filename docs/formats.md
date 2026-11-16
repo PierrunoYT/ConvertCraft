@@ -98,7 +98,7 @@ Nested JSON text is not automatically parsed back into nested values when readin
 
 ## Audio
 
-**Input extensions:** `mp3`, `mp2`, `wav`, `w64`, `flac`, `ogg`, `oga`, `m4a`, `m4b`, `aac`, `opus`, `wma`, `aiff`, `aif`, `aifc`, `ac3`, `eac3`.
+**Input extensions:** `mp3`, `mp2`, `wav`, `w64`, `flac`, `ogg`, `oga`, `m4a`, `m4b`, `aac`, `opus`, `wma`, `aiff`, `aif`, `aifc`, `ac3`, `eac3`, `dts`.
 
 **Output targets:** `mp3`, `wav`, `flac`, `ogg`, `m4a`, `opus`.
 
@@ -140,7 +140,7 @@ Paths and options are passed as separate process arguments, not interpolated int
 
 FFmpeg is the first `ffmpeg` (`ffmpeg.exe` on Windows) found in an **absolute** `PATH` entry that runs `-version` successfully. On macOS, Homebrew's `/opt/homebrew/bin` (Apple Silicon) and `/usr/local/bin` (Intel) are searched after `PATH`, since an app opened from Finder or the Dock gets only `/usr/bin:/bin:/usr/sbin:/sbin`. Relative `PATH` entries are skipped, and, unlike a plain process launch on Windows, the application's own folder is not searched, so an `ffmpeg.exe` placed next to ConvertCraft is never run implicitly.
 
-`DEMUXERS` is `aac,ac3,aiff,asf,avi,eac3,flac,flv,matroska,mov,mp3,mpeg,mpegts,ogg,w64,wav`, which covers every recognized audio/video input extension. Playlist and concatenation formats (HLS, ffconcat) are not on the list, so a "video" that is really a playlist cannot pull other local files into the output. Only the `file` protocol is allowed for input.
+`DEMUXERS` is `aac,ac3,aiff,asf,avi,dts,eac3,flac,flv,matroska,mov,mp3,mpeg,mpegts,ogg,w64,wav`, which covers every recognized audio/video input extension. Playlist and concatenation formats (HLS, ffconcat) are not on the list, so a "video" that is really a playlist cannot pull other local files into the output. Only the `file` protocol is allowed for input.
 
 Jobs can be cancelled from the UI. A job is also stopped if FFmpeg reports no progress for 5 minutes. Only the last 64 KiB of FFmpeg's error output is kept.
 

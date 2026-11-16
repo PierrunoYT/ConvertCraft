@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- DTS audio input.
 - E-AC3 (Dolby Digital Plus) audio input.
 - AC3 (Dolby Digital) audio input.
 - AIFC audio input.
