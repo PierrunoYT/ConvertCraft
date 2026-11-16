@@ -6,6 +6,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Changed
 
+- README: tested Linux setup commands for Debian/Ubuntu, Fedora, Arch, openSUSE, and Alpine. The previous Debian/Ubuntu list lacked `libxcursor1`, `libxrandr2`, and `libxi6`, so the app failed to start on minimal Ubuntu 22.04 systems; it no longer lists unneeded `-dev` packages. Notes cover Fedora's and openSUSE's FFmpeg lacking H.264 and Alpine's dynamic-linking flag.
 - README: CI, platform, and license badges, a screenshot of a finished batch, and separate Windows, macOS, and Linux setup sections.
 - README: note that ConvertCraft is one of Pierruno's open-source desktop apps, linking to https://pierruno.dev/.
 - README: Linux file pickers need an XDG desktop portal or `zenity`; without either, **Add files…** and **Add folder…** do nothing.

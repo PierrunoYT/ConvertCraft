@@ -82,13 +82,53 @@ PATH="$(brew --prefix ffmpeg-full)/bin:$PATH" target/release/ConvertCraft.app/Co
 
 ### Linux
 
-On Debian/Ubuntu, install the native build and graphics dependencies, plus FFmpeg for audio and video:
+Build ConvertCraft on the distro you run it on: a binary built on a newer distro needs a newer glibc and will not start on an older one. Install a C compiler, the graphics and keyboard libraries, and FFmpeg, then build with Cargo as shown above. The windowing libraries are loaded when the app starts rather than linked, so no `-dev` packages are needed; if one is missing, the build succeeds but the app exits at launch naming the library (for example `libXcursor.so.1`).
+
+These commands were tested by building and launching ConvertCraft in a clean container of each distro:
+
+**Debian 12+ / Ubuntu 22.04+**
 
 ```sh
 sudo apt-get update
-sudo apt-get install build-essential pkg-config libxkbcommon-dev libxkbcommon-x11-0 \
-  libwayland-dev libgl1-mesa-dev ffmpeg
+sudo apt-get install build-essential libxkbcommon0 libxkbcommon-x11-0 libgl1 libegl1 \
+  libgl1-mesa-dri libx11-6 libxcursor1 libxrandr2 libxi6 libwayland-client0 ffmpeg
 ```
+
+**Fedora**
+
+```sh
+sudo dnf install gcc libxkbcommon libxkbcommon-x11 mesa-libGL mesa-libEGL mesa-dri-drivers \
+  libX11 libXcursor libXrandr libXi libwayland-client ffmpeg-free
+```
+
+Fedora's `ffmpeg-free` has no H.264 encoder, so MP4, MOV, M4V, MKV, TS, and FLV output fail. For those, replace it with `ffmpeg` from [RPM Fusion](https://rpmfusion.org/Configuration).
+
+**Arch Linux**
+
+```sh
+sudo pacman -S --needed gcc libxkbcommon-x11 mesa libx11 libxcursor libxrandr libxi wayland ffmpeg
+```
+
+**openSUSE Tumbleweed**
+
+```sh
+sudo zypper install gcc libxkbcommon0 libxkbcommon-x11-0 Mesa-libGL1 Mesa-libEGL1 Mesa-dri \
+  libX11-6 libXcursor1 libXrandr2 libXi6 libwayland-client0 ffmpeg
+```
+
+openSUSE's `ffmpeg` also lacks H.264; use the [Packman](https://en.opensuse.org/Additional_package_repositories#Packman) build for MP4, MOV, M4V, MKV, TS, and FLV output.
+
+**Alpine Linux**
+
+```sh
+sudo apk add build-base libxkbcommon libxkbcommon-x11 mesa-gl mesa-egl mesa-dri-gallium \
+  libx11 libxcursor libxrandr libxi wayland-libs-client ffmpeg
+RUSTFLAGS="-C target-feature=-crt-static" cargo build --release --locked
+```
+
+On musl, Rust links statically by default, and a static binary cannot load the windowing libraries ("Dynamic loading not supported"), so build with the flag above.
+
+The FFmpeg packages from Debian, Ubuntu, Arch, and Alpine include every encoder ConvertCraft uses. Other distros, NixOS, and ARM have not been tested.
 
 ConvertCraft runs natively on both X11 and Wayland. File pickers use the desktop's XDG portal service and fall back to `zenity` when no portal is available. If **Add files…** or **Add folder…** does nothing, install `xdg-desktop-portal` with the backend for your desktop, or install `zenity` (`sudo apt-get install zenity`).
 
