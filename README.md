@@ -54,7 +54,7 @@ On Debian/Ubuntu, install the native build and graphics dependencies with:
 
 ```sh
 sudo apt-get update
-sudo apt-get install build-essential pkg-config libssl-dev libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libgl1-mesa-dev
+sudo apt-get install build-essential pkg-config libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libgl1-mesa-dev
 ```
 
 Linux file pickers use the desktop's XDG portal service. If dialogs do not open, check that `xdg-desktop-portal` and the backend appropriate for your desktop are installed and running.
@@ -94,9 +94,9 @@ Targets are restricted to each category. Extension recognition is case-insensiti
 
 ## Know before converting
 
-- **Keep originals and backups.** Filename checks are not atomic and do not detect every filesystem alias. Outputs are written directly, and failed conversions can leave partial files.
+- **Keep originals and backups.** Each output is written to a temporary file and only published after a successful conversion, so a failed job leaves no partial file. Publication is still pathname-based and does not detect every filesystem alias.
 - **Images are not archival copies.** JPEG has no transparency, so transparent areas become white. ICO output fits within 256×256. Image conversion does not preserve animation frames or metadata, and only PNG and TIFF keep 16-bit depth.
-- **Data conversion can change representation.** Comments and formatting are lost. CSV infers scalar types, so `00123` can become `123`. TOML rejects nulls and wraps non-object roots under `items`. See [data compatibility](docs/formats.md#structured-data).
+- **Data conversion can change representation.** Comments and formatting are lost. CSV infers numbers and booleans, so `1.50` becomes `1.5` and `true` becomes a boolean; values with leading zeros such as `00123` stay text. TOML rejects nulls and wraps non-object roots under `items`. See [data compatibility](docs/formats.md#structured-data).
 - **Media is re-encoded.** Fixed presets determine quality and codec selection; there are no bitrate, trimming, subtitle, or stream-selection controls.
 - **Sessions are temporary.** Settings and the queue are not saved. A running batch can be cancelled; image and data jobs already in progress finish first.
 
