@@ -88,7 +88,7 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "tta" | "au" => Category::Audio,
         "mp4" | "mkv" | "webm" | "avi" | "divx" | "mov" | "wmv" | "asf" | "flv" | "f4v" | "m4v"
         | "mpg" | "mpeg" | "m2v" | "vob" | "ts" | "mts" | "m2ts" | "3gp" | "3g2" | "ogv"
-        | "mxf" | "rm" | "rmvb" | "dv" => Category::Video,
+        | "mxf" | "rm" | "rmvb" | "dv" | "y4m" => Category::Video,
         _ => return None,
     };
     Some(cat)
@@ -837,7 +837,7 @@ impl<W: Write> Write for LimitedWriter<W> {
 /// Demuxers for the advertised audio/video inputs. Playlist and concat demuxers (HLS,
 /// ffconcat) that could pull other local files into the output are not on the list.
 const MEDIA_DEMUXERS: &str = "aac,ac3,aiff,asf,au,avi,caf,dts,dv,eac3,flac,flv,matroska,mov,mp3,\
-     mpeg,mpegts,mpegvideo,mxf,ogg,rm,tta,w64,wav,wv";
+     mpeg,mpegts,mpegvideo,mxf,ogg,rm,tta,w64,wav,wv,yuv4mpegpipe";
 /// FFmpeg reports progress about twice a second; a job silent this long is stuck.
 const FFMPEG_STALL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 /// Only the end of FFmpeg's error output is shown, so only the end is kept.
@@ -1755,14 +1755,15 @@ mod tests {
             };
             cmd.args(["-f", "lavfi", "-i", source]);
         }
-        // Raw elementary streams carry no audio.
-        if !matches!(ext, "m2v") {
+        // Raw elementary streams and YUV4MPEG carry no audio.
+        if !matches!(ext, "m2v" | "y4m") {
             cmd.args(["-f", "lavfi", "-i", "sine=duration=1:sample_rate=48000"]);
         }
         let codecs: &[&str] = match ext {
             "mpg" | "mpeg" => &["-c:v", "mpeg2video", "-c:a", "mp2"],
             "vob" => &["-f", "vob", "-c:v", "mpeg2video", "-c:a", "mp2"],
             "m2v" => &["-c:v", "mpeg2video"],
+            "y4m" => &["-pix_fmt", "yuv420p"],
             "dv" => &[
                 "-c:v",
                 "dvvideo",
@@ -1802,6 +1803,7 @@ mod tests {
             "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "caf", "wv", "tta", "au", "mp4",
             "mkv", "webm", "avi", "divx", "mov", "wmv", "asf", "flv", "f4v", "m4v", "mpg", "mpeg",
             "m2v", "vob", "ts", "mts", "m2ts", "3gp", "3g2", "ogv", "mxf", "rm", "rmvb", "dv",
+            "y4m",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();

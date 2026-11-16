@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- YUV4MPEG (`.y4m`) video input.
 - RealMedia (`.rm`, `.rmvb`) video input.
 - MXF video input.
 - DV video input.
