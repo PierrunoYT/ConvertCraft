@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- RealMedia (`.rm`, `.rmvb`) video input.
 - MXF video input.
 - DV video input.
 - OGV (Ogg video) input.

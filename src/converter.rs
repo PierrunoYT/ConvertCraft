@@ -88,7 +88,7 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "tta" | "au" => Category::Audio,
         "mp4" | "mkv" | "webm" | "avi" | "divx" | "mov" | "wmv" | "asf" | "flv" | "f4v" | "m4v"
         | "mpg" | "mpeg" | "m2v" | "vob" | "ts" | "mts" | "m2ts" | "3gp" | "3g2" | "ogv"
-        | "mxf" | "dv" => Category::Video,
+        | "mxf" | "rm" | "rmvb" | "dv" => Category::Video,
         _ => return None,
     };
     Some(cat)
@@ -837,7 +837,7 @@ impl<W: Write> Write for LimitedWriter<W> {
 /// Demuxers for the advertised audio/video inputs. Playlist and concat demuxers (HLS,
 /// ffconcat) that could pull other local files into the output are not on the list.
 const MEDIA_DEMUXERS: &str = "aac,ac3,aiff,asf,au,avi,caf,dts,dv,eac3,flac,flv,matroska,mov,mp3,\
-     mpeg,mpegts,mpegvideo,mxf,ogg,tta,w64,wav,wv";
+     mpeg,mpegts,mpegvideo,mxf,ogg,rm,tta,w64,wav,wv";
 /// FFmpeg reports progress about twice a second; a job silent this long is stuck.
 const FFMPEG_STALL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 /// Only the end of FFmpeg's error output is shown, so only the end is kept.
@@ -1774,6 +1774,8 @@ mod tests {
                 "2",
             ],
             "mxf" => &["-c:v", "mpeg2video", "-c:a", "pcm_s16le"],
+            "rm" => &["-c:v", "rv10", "-c:a", "ac3"],
+            "rmvb" => &["-f", "rm", "-c:v", "rv10", "-c:a", "ac3"],
             "3gp" | "3g2" | "f4v" => &["-c:v", "libx264", "-c:a", "aac"],
             "divx" => &["-f", "avi"],
             "mts" | "m2ts" => &["-f", "mpegts"],
@@ -1799,7 +1801,7 @@ mod tests {
             "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "m4b", "aac", "opus", "wma",
             "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "caf", "wv", "tta", "au", "mp4",
             "mkv", "webm", "avi", "divx", "mov", "wmv", "asf", "flv", "f4v", "m4v", "mpg", "mpeg",
-            "m2v", "vob", "ts", "mts", "m2ts", "3gp", "3g2", "ogv", "mxf", "dv",
+            "m2v", "vob", "ts", "mts", "m2ts", "3gp", "3g2", "ogv", "mxf", "rm", "rmvb", "dv",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();
