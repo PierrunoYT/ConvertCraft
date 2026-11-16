@@ -290,12 +290,41 @@ fn convert_image(
                 "qoi" => (ImageFormat::Qoi, img),
                 other => bail!("unsupported image target: {other}"),
             };
-            // Most encoders only accept 8-bit RGBA; normalize to it.
-            DynamicImage::ImageRgba8(img.to_rgba8()).write_to(&mut writer, format)?;
+            encoder_layout(img, target).write_to(&mut writer, format)?;
         }
     }
     writer.flush().context("cannot flush image output")?;
     Ok(())
+}
+
+/// Converts to the closest pixel layout the target encoder accepts, keeping grayscale
+/// and opaque images without an added alpha channel and 16-bit depth where supported.
+/// `into_*` reuses the buffer when the image already has that layout.
+fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
+    let color = img.color();
+    let (gray, alpha) = (!color.has_color(), color.has_alpha());
+    let deep = color.bytes_per_pixel() > color.channel_count();
+    match target {
+        // TIFF stores 16-bit samples but has no gray+alpha layout in `image`.
+        "tiff" if deep => match (gray, alpha) {
+            (true, false) => DynamicImage::ImageLuma16(img.into_luma16()),
+            (false, false) => DynamicImage::ImageRgb16(img.into_rgb16()),
+            (_, true) => DynamicImage::ImageRgba16(img.into_rgba16()),
+        },
+        "tiff" if gray && alpha => DynamicImage::ImageRgba8(img.into_rgba8()),
+        // GIF quantizes from RGBA; ICO entries are stored as RGBA.
+        "gif" | "ico" => DynamicImage::ImageRgba8(img.into_rgba8()),
+        // QOI has only RGB and RGBA.
+        "qoi" if alpha => DynamicImage::ImageRgba8(img.into_rgba8()),
+        "qoi" => DynamicImage::ImageRgb8(img.into_rgb8()),
+        // BMP, TGA, WebP and 8-bit TIFF accept every 8-bit layout.
+        _ => match (gray, alpha) {
+            (true, false) => DynamicImage::ImageLuma8(img.into_luma8()),
+            (true, true) => DynamicImage::ImageLumaA8(img.into_luma_alpha8()),
+            (false, false) => DynamicImage::ImageRgb8(img.into_rgb8()),
+            (false, true) => DynamicImage::ImageRgba8(img.into_rgba8()),
+        },
+    }
 }
 
 fn encode_jpeg(image: &DynamicImage, writer: &mut impl Write, quality: u8) -> Result<()> {
@@ -964,6 +993,46 @@ mod tests {
             let out = convert_to(&src, dir.path(), Category::Image, t, &Options::default())
                 .unwrap_or_else(|e| panic!("{t}: {e:#}"));
             image::open(&out).unwrap_or_else(|e| panic!("reopen {t}: {e}"));
+        }
+    }
+
+    #[test]
+    fn outputs_keep_channels_and_tiff_keeps_16_bit() {
+        use image::ColorType;
+        let dir = tempfile::tempdir().unwrap();
+        let gray16 = image::ImageBuffer::<image::Luma<u16>, _>::from_fn(8, 8, |x, y| {
+            image::Luma([(x * 8000 + y) as u16])
+        });
+        let sources = [
+            ("gray16.png", DynamicImage::ImageLuma16(gray16)),
+            (
+                "rgb.png",
+                DynamicImage::ImageRgb8(image::RgbImage::new(8, 8)),
+            ),
+            (
+                "gray_alpha.png",
+                DynamicImage::ImageLumaA8(image::GrayAlphaImage::new(8, 8)),
+            ),
+        ];
+        for (name, img) in sources {
+            let src = dir.path().join(name);
+            img.save(&src).unwrap();
+            for &t in Category::Image.targets() {
+                let out = convert_to(&src, dir.path(), Category::Image, t, &Options::default())
+                    .unwrap_or_else(|e| panic!("{name} -> {t}: {e:#}"));
+                let color = image::open(&out)
+                    .unwrap_or_else(|e| panic!("reopen {name} -> {t}: {e}"))
+                    .color();
+                let expected = match (name, t) {
+                    ("gray16.png", "tiff") => Some(ColorType::L16),
+                    ("rgb.png", "bmp" | "tiff" | "qoi" | "tga" | "webp") => Some(ColorType::Rgb8),
+                    ("gray_alpha.png", "tga") => Some(ColorType::La8),
+                    _ => None,
+                };
+                if let Some(expected) = expected {
+                    assert_eq!(color, expected, "{name} -> {t}");
+                }
+            }
         }
     }
 

@@ -21,6 +21,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 - Logo embedded as the Windows executable icon (Explorer, taskbar, shortcuts) via `build.rs`.
 - EXIF orientation is applied when converting images, so rotated phone photos come out upright.
 - JPG output composites transparent pixels over white instead of exposing the hidden (often black) color underneath.
+- Image outputs keep the input's channel layout (no alpha added to opaque images), and TIFF keeps 16-bit depth.
 - File selection, recursive folder import, drag-and-drop, and duplicate-path filtering.
 - Image conversion to PNG, JPG, WebP, BMP, GIF, TIFF, ICO, TGA, and QOI, including JPEG quality control and ICO resizing.
 - JSON, YAML, TOML, and CSV conversion, including CSV scalar inference and TOML wrapping for non-object roots.
