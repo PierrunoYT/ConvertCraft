@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- WMA audio output, also as an audio-extraction target for video.
 - AIFF audio output, also as an audio-extraction target for video.
 - AAC (raw ADTS) audio output, also as an audio-extraction target for video.
 - Video files can extract audio to FLAC, OGG, and Opus, not only MP3, WAV, and M4A.
