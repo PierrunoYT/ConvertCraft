@@ -86,9 +86,8 @@ pub fn detect(path: &Path) -> Option<Category> {
         "mp3" | "mp2" | "wav" | "w64" | "flac" | "ogg" | "oga" | "m4a" | "m4b" | "aac" | "opus"
         | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" | "caf" | "wv"
         | "tta" | "au" => Category::Audio,
-        "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg" | "ts" => {
-            Category::Video
-        }
+        "mp4" | "mkv" | "webm" | "avi" | "divx" | "mov" | "wmv" | "flv" | "m4v" | "mpg"
+        | "mpeg" | "ts" => Category::Video,
         _ => return None,
     };
     Some(cat)
@@ -1751,6 +1750,7 @@ mod tests {
         cmd.args(["-f", "lavfi", "-i", "sine=duration=1"]);
         let codecs: &[&str] = match ext {
             "mpg" | "mpeg" => &["-c:v", "mpeg2video", "-c:a", "mp2"],
+            "divx" => &["-f", "avi"],
             "dts" => &["-c:a", "dca", "-strict", "-2"],
             "mp2" => &["-c:a", "mp2"],
             "mka" | "oga" => &["-c:a", "flac"],
@@ -1772,7 +1772,7 @@ mod tests {
         for ext in [
             "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "m4b", "aac", "opus", "wma",
             "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "caf", "wv", "tta", "au", "mp4",
-            "mkv", "webm", "avi", "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
+            "mkv", "webm", "avi", "divx", "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();
