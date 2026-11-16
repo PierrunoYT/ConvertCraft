@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- Sun AU (`.au`) audio input.
 - TTA (True Audio) input.
 - WavPack (`.wv`) audio input.
 - CAF (Core Audio Format) input.
