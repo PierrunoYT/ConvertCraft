@@ -1,13 +1,16 @@
 # Changelog
-- README: note that ConvertCraft is one of Pierruno's open-source desktop apps, linking to https://pierruno.dev/.
 
-This changelog records the current implementation. `Cargo.toml` declares version `0.1.0`, but the repository has no commits or release tags from which to establish a release date or historical changes.
+This changelog records the current implementation. `Cargo.toml` declares version `0.1.0`, but the repository has no release tags, so every change is listed under **Unreleased**.
 
 ## Unreleased
 
 ### Changed
 
 - README: CI, platform, and license badges, a screenshot of a finished batch, and separate Windows, macOS, and Linux setup sections.
+- README: note that ConvertCraft is one of Pierruno's open-source desktop apps, linking to https://pierruno.dev/.
+- README: Linux file pickers need an XDG desktop portal or `zenity`; without either, **Add files…** and **Add folder…** do nothing.
+- README: OGG output needs Homebrew's `ffmpeg-full` on macOS, because the `ffmpeg` formula has no Vorbis encoder.
+- Repository moved to https://github.com/PierrunoYT/ConvertCraft; Cargo metadata and README links point there.
 - Renamed the Cargo package and executable from `transmute` to `convertcraft`.
 - Replaced the logo with an orange-and-blue conversion-arrow mark, shared by the window icon, app header, empty queue, and README.
 - Separated branding from queue controls and rewrote the README with setup, workflow, supported formats, and conversion limitations.
@@ -21,6 +24,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 - `#![forbid(unsafe_code)]` at the crate root.
 - `CONVERTCRAFT_REQUIRE_FFMPEG` / `CONVERTCRAFT_REQUIRE_SYMLINKS` test switches that turn skipped media/symlink tests into failures.
 - ConvertCraft desktop interface built with egui/eframe.
+- GPL-3.0 license.
 - Supplied logo embedded as the window icon and displayed in the README.
 - Logo embedded as the Windows executable icon (Explorer, taskbar, shortcuts) via `build.rs`.
 - EXIF orientation is applied when converting images, so rotated phone photos come out upright.
@@ -71,8 +75,9 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Known limitations
 
-- No cancellation, persistent settings, saved queue, or conversion command-line interface.
+- No persistent settings, saved queue, or conversion command-line interface.
 - Media conversions require an external FFmpeg installation with the required codecs.
 - Image conversion uses a single decoded image rather than preserving animation.
 - Structured data conversion does not preserve comments, formatting, or every source-format type.
 - Output publication is pathname-based; hostile ancestor-directory replacement in the final check-to-rename interval is not fully isolated.
+- **Cancel** stops FFmpeg jobs immediately, but image and data jobs already running finish first.

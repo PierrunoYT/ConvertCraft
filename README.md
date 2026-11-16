@@ -74,6 +74,12 @@ scripts/bundle-macos.sh
 
 This builds the release binary and wraps it in `target/release/ConvertCraft.app` with the logo as its icon. Drag the app to `/Applications`, or open it from Finder. A Homebrew FFmpeg (`brew install ffmpeg`) is found even when the app is opened from Finder or the Dock. The bundle is ad-hoc signed, which is enough on the Mac that built it; a copy downloaded from elsewhere needs a Developer ID signature and notarization before Gatekeeper will open it.
 
+Homebrew's `ffmpeg` formula has no Vorbis encoder, so OGG output fails with it. For OGG, run `brew install ffmpeg-full`. That formula is keg-only, so the app opened from Finder does not find it; start ConvertCraft from a terminal instead:
+
+```sh
+PATH="$(brew --prefix ffmpeg-full)/bin:$PATH" target/release/ConvertCraft.app/Contents/MacOS/convertcraft
+```
+
 ### Linux
 
 On Debian/Ubuntu, install the native build and graphics dependencies, plus FFmpeg for audio and video:

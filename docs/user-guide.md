@@ -65,6 +65,8 @@ To reconvert a completed source, remove its row and add it again. Changing a com
 
 Run `ffmpeg -version` in the launch environment and restart ConvertCraft. A successful availability check does not guarantee that codecs such as `libx264`, `libvpx-vp9`, `libmp3lame`, `libvorbis`, or `libopus` are installed. Inspect `ffmpeg -encoders` if conversion reports a missing encoder. Audio extraction also requires an audio stream in the source.
 
+On macOS, Homebrew's `ffmpeg` formula has no `libvorbis`, so OGG output fails. Install `ffmpeg-full`, which is keg-only, and launch ConvertCraft from a terminal with `$(brew --prefix ffmpeg-full)/bin` first on `PATH`; see the [README](../README.md#macos).
+
 ### File dialogs do not open on Linux
 
 The file and folder pickers use the XDG desktop portal and fall back to `zenity`. Window managers without a portal, such as a bare i3 or sway session, need either `xdg-desktop-portal` with a GTK, GNOME, or KDE backend, or `zenity`. Drag and drop works without either.
