@@ -4,7 +4,7 @@ The extension lists and targets below come from `Category::targets` and `detect`
 
 ## Images
 
-**Input extensions:** `png`, `jpg`, `jpeg`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`.
+**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`.
 
 **Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`.
 
@@ -25,7 +25,7 @@ An EXIF orientation tag (set by cameras and phones for rotated shots) is applied
 - **QOI:** RGB for opaque inputs, RGBA otherwise.
 - **GIF:** converts to 8-bit RGBA and quantizes to a 256-color palette.
 
-There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; only PNG, TIFF, and PNM keep 16-bit depth.
+There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; APNG inputs convert their first frame. Only PNG, TIFF, and PNM keep 16-bit depth.
 
 ## Structured data
 

@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- `.jfif`, `.pam`, and `.apng` image inputs; APNG converts its first frame.
 - PNM image output, written as PAM (`P7`) and keeping 16-bit depth.
 - `scripts/bundle-macos.sh` builds a double-clickable `ConvertCraft.app` with the logo as its icon. On macOS, FFmpeg is also looked up in Homebrew's `/opt/homebrew/bin` and `/usr/local/bin`, so an app opened from Finder or the Dock finds a Homebrew FFmpeg despite launchd's minimal `PATH`.
 - **Cancel** button for running batches; FFmpeg jobs stop immediately (#22, #23).

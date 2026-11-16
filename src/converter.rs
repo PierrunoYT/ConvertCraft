@@ -76,8 +76,8 @@ pub fn extension(path: &Path) -> String {
 
 pub fn detect(path: &Path) -> Option<Category> {
     let cat = match extension(path).as_str() {
-        "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif" | "tif" | "tiff" | "ico" | "tga"
-        | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" => Category::Image,
+        "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
+        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" => Category::Image,
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
         "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
             Category::Audio
@@ -103,8 +103,10 @@ pub fn default_target(path: &Path, cat: Category) -> &'static str {
 
 fn normalize_ext(ext: &str) -> &str {
     match ext {
-        "jpeg" => "jpg",
+        "jpeg" | "jfif" => "jpg",
+        "apng" => "png",
         "tif" => "tiff",
+        "pbm" | "pgm" | "ppm" | "pam" => "pnm",
         "yml" => "yaml",
         other => other,
     }
