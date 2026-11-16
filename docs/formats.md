@@ -131,7 +131,7 @@ ffmpeg -y -nostdin -hide_banner -loglevel error -progress pipe:1 \
 
 Paths and options are passed as separate process arguments, not interpolated into a shell command. On Windows the subprocess uses `CREATE_NO_WINDOW`.
 
-FFmpeg is the first `ffmpeg` (`ffmpeg.exe` on Windows) found in an **absolute** `PATH` entry that runs `-version` successfully. Relative `PATH` entries are skipped, and, unlike a plain process launch on Windows, the application's own folder is not searched, so an `ffmpeg.exe` placed next to ConvertCraft is never run implicitly.
+FFmpeg is the first `ffmpeg` (`ffmpeg.exe` on Windows) found in an **absolute** `PATH` entry that runs `-version` successfully. On macOS, Homebrew's `/opt/homebrew/bin` (Apple Silicon) and `/usr/local/bin` (Intel) are searched after `PATH`, since an app opened from Finder or the Dock gets only `/usr/bin:/bin:/usr/sbin:/sbin`. Relative `PATH` entries are skipped, and, unlike a plain process launch on Windows, the application's own folder is not searched, so an `ffmpeg.exe` placed next to ConvertCraft is never run implicitly.
 
 `DEMUXERS` is `aac,aiff,asf,avi,flac,flv,matroska,mov,mp3,mpeg,mpegts,ogg,wav`, which covers every recognized audio/video input extension. Playlist and concatenation formats (HLS, ffconcat) are not on the list, so a "video" that is really a playlist cannot pull other local files into the output. Only the `file` protocol is allowed for input.
 

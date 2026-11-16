@@ -23,6 +23,7 @@ The source includes Windows, macOS, and Unix file-manager integration. Platform-
 - `src/converter.rs`: extension/category detection, target defaults, image/data/media backends, and unit tests.
 - `src/output.rs`: batch input identity protection, destination planning, staged output publication, and filesystem regression tests.
 - `crates/file-id/`: `convertcraft-file-id`, a small crate that safely wraps the two file-identity calls std does not expose: `GetFileInformationByHandleEx` with `FileIdInfo` on Windows and the `FS_IOC_GETVERSION` ioctl on Linux. It holds the project's only `unsafe` code, so the application crate can forbid it.
+- `scripts/bundle-macos.sh`: builds `target/release/ConvertCraft.app` on macOS: the release binary, an `.icns` icon generated from `logo.png` with `sips` and `iconutil`, and `Info.plist` (version from `Cargo.toml`), ad-hoc signed with `codesign`. It needs only the tools that ship with macOS.
 - `assets/logos/`: transparent logo (`logo.png`) and light/dark previews (`logo-light.png`, `logo-dark.png`). Only `logo.png` is embedded and shared by the window icon, app header, empty queue, and README. The UI texture is uploaded once at startup and retained by `App`.
 - `docs/`: user-facing behavior and developer reference.
 
@@ -103,7 +104,7 @@ Each test owns a unique temporary directory that is cleaned up on completion. Th
 `.github/workflows/ci.yml` runs on pushes to `master` and on pull requests:
 
 - `cargo fmt --check` and `cargo clippy --locked --workspace --all-targets -- -D warnings` on Linux.
-- `cargo test --locked --workspace` on Linux, Windows, and macOS with FFmpeg installed and both `CONVERTCRAFT_REQUIRE_*` variables set, so media and symlink tests cannot skip silently.
+- `cargo test --locked --workspace` on Linux, Windows, and macOS with FFmpeg installed and both `CONVERTCRAFT_REQUIRE_*` variables set, so media and symlink tests cannot skip silently. The macOS job also builds `ConvertCraft.app` with `scripts/bundle-macos.sh` and verifies its signature.
 - `cargo deny check` using [`deny.toml`](../deny.toml): RustSec advisories, license allowlist, crates.io-only sources. Each ignored advisory names its reason.
 
 The application crate root declares `#![forbid(unsafe_code)]`; the only `unsafe` code is the documented Win32 call and Linux ioctl in `crates/file-id`.

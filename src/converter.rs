@@ -807,9 +807,16 @@ pub fn ffmpeg_status() -> Option<Option<&'static Path>> {
     FFMPEG.get().map(Option::as_deref)
 }
 
-/// Candidate executables from absolute PATH entries only. Unlike `Command::new`, this
-/// never picks up an `ffmpeg` that sits next to the application or in the working
-/// directory.
+/// Homebrew's bin directories (Apple Silicon, then Intel), searched after PATH. An app
+/// opened from Finder or the Dock gets launchd's minimal PATH, which has neither.
+#[cfg(target_os = "macos")]
+const FALLBACK_FFMPEG_DIRS: &[&str] = &["/opt/homebrew/bin", "/usr/local/bin"];
+#[cfg(not(target_os = "macos"))]
+const FALLBACK_FFMPEG_DIRS: &[&str] = &[];
+
+/// Candidate executables from absolute PATH entries, then the fallback directories.
+/// Unlike `Command::new`, this never picks up an `ffmpeg` that sits next to the
+/// application or in the working directory.
 fn ffmpeg_candidates(path_var: &OsStr) -> impl Iterator<Item = PathBuf> + '_ {
     let name = if cfg!(windows) {
         "ffmpeg.exe"
@@ -818,11 +825,12 @@ fn ffmpeg_candidates(path_var: &OsStr) -> impl Iterator<Item = PathBuf> + '_ {
     };
     std::env::split_paths(path_var)
         .filter(|dir| dir.is_absolute())
+        .chain(FALLBACK_FFMPEG_DIRS.iter().map(PathBuf::from))
         .map(move |dir| dir.join(name))
 }
 
 fn locate_ffmpeg() -> Option<PathBuf> {
-    let path_var = std::env::var_os("PATH")?;
+    let path_var = std::env::var_os("PATH").unwrap_or_default();
     let ffmpeg = ffmpeg_candidates(&path_var).find(|candidate| candidate.is_file())?;
     let works = ffmpeg_command(&ffmpeg)
         .arg("-version")
@@ -1613,8 +1621,26 @@ mod tests {
         let path_var =
             std::env::join_paths([Path::new("relative"), Path::new("."), dir.path()]).unwrap();
         let candidates: Vec<PathBuf> = ffmpeg_candidates(&path_var).collect();
-        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates.len(), 1 + FALLBACK_FFMPEG_DIRS.len());
         assert!(candidates[0].starts_with(dir.path()));
+        assert!(candidates.iter().all(|candidate| candidate.is_absolute()));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn ffmpeg_lookup_falls_back_to_homebrew_after_path() {
+        // The PATH a Finder-launched app gets.
+        let candidates: Vec<PathBuf> = ffmpeg_candidates(OsStr::new("/usr/bin:/bin")).collect();
+        assert_eq!(
+            candidates,
+            [
+                "/usr/bin/ffmpeg",
+                "/bin/ffmpeg",
+                "/opt/homebrew/bin/ffmpeg",
+                "/usr/local/bin/ffmpeg"
+            ]
+            .map(PathBuf::from)
+        );
     }
 
     /// Generate a short sample in `dir` for one media input extension.

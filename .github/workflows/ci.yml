@@ -52,6 +52,11 @@ jobs:
       - run: ffmpeg -version
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --locked --workspace
+      - name: Build the app bundle (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          scripts/bundle-macos.sh
+          codesign --verify --strict target/release/ConvertCraft.app
 
   deny:
     runs-on: ubuntu-latest

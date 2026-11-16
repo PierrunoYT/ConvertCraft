@@ -50,6 +50,14 @@ cargo build --release --locked
 
 The executable is `target/release/convertcraft` on Linux/macOS or `target/release/convertcraft.exe` on Windows. The Cargo package and executable were previously named `transmute`; update any scripts or shortcuts that use the old name.
 
+On macOS, build a double-clickable app with:
+
+```sh
+scripts/bundle-macos.sh
+```
+
+This builds the release binary and wraps it in `target/release/ConvertCraft.app` with the logo as its icon. Drag the app to `/Applications`, or open it from Finder. The bundle is ad-hoc signed, which is enough on the Mac that built it; a copy downloaded from elsewhere needs a Developer ID signature and notarization before Gatekeeper will open it.
+
 On Debian/Ubuntu, install the native build and graphics dependencies with:
 
 ```sh
@@ -69,7 +77,7 @@ ffmpeg -version
 
 For example, use `sudo apt-get install ffmpeg` on Debian/Ubuntu or `brew install ffmpeg` on macOS with Homebrew. On Windows, add the directory containing `ffmpeg.exe` to `PATH`.
 
-The header shows **checking ffmpeg…** briefly, then **ffmpeg ✔** (hover for the path in use) or **ffmpeg missing**. Only absolute `PATH` entries are searched, never ConvertCraft's own folder. Restart ConvertCraft after installing FFmpeg or changing `PATH`: availability is checked at startup. Available encoders depend on your FFmpeg build.
+The header shows **checking ffmpeg…** briefly, then **ffmpeg ✔** (hover for the path in use) or **ffmpeg missing**. Only absolute `PATH` entries are searched, never ConvertCraft's own folder. On macOS, Homebrew's `/opt/homebrew/bin` and `/usr/local/bin` are also searched, because apps opened from Finder or the Dock do not get your shell's `PATH`. Restart ConvertCraft after installing FFmpeg or changing `PATH`: availability is checked at startup. Available encoders depend on your FFmpeg build.
 
 ## Convert a batch
 
@@ -117,6 +125,7 @@ The existing tests exercise image targets, structured data round trips, output-p
 | [`src/converter.rs`](src/converter.rs) | Format detection, conversion backends, and tests |
 | [`src/output.rs`](src/output.rs) | Output planning, batch input protection, and staged publication |
 | [`src/import.rs`](src/import.rs) | Bounded background folder scan for file and folder import |
+| [`scripts/bundle-macos.sh`](scripts/bundle-macos.sh) | Builds `ConvertCraft.app` on macOS |
 | [`assets/logos/`](assets/logos/) | Transparent logo (`logo.png`) and light/dark previews (`logo-light.png`, `logo-dark.png`) |
 | [`docs/`](docs/README.md) | User guide, format details, and architecture |
 

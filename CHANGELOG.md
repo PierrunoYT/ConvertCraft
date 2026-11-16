@@ -13,6 +13,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- `scripts/bundle-macos.sh` builds a double-clickable `ConvertCraft.app` with the logo as its icon. On macOS, FFmpeg is also looked up in Homebrew's `/opt/homebrew/bin` and `/usr/local/bin`, so an app opened from Finder or the Dock finds a Homebrew FFmpeg despite launchd's minimal `PATH`.
 - **Cancel** button for running batches; FFmpeg jobs stop immediately (#22, #23).
 - CI workflow: rustfmt, Clippy with `-D warnings`, tests on Linux/Windows/macOS with FFmpeg, and `cargo deny check` with a committed `deny.toml` policy (#20).
 - `#![forbid(unsafe_code)]` at the crate root.
