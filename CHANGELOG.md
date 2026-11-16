@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- OGV (Theora/Vorbis) video output.
 - WMV video output.
 - FLV video output.
 - MPEG-TS (`.ts`) video output.

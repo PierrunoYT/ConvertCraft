@@ -62,8 +62,8 @@ impl Category {
                 "mp3", "wav", "flac", "ogg", "m4a", "opus", "aac", "aiff", "wma", "ac3",
             ],
             Category::Video => &[
-                "mp4", "mkv", "webm", "avi", "mov", "m4v", "ts", "flv", "wmv", "gif", "mp3", "wav",
-                "flac", "ogg", "m4a", "opus", "aac", "aiff", "wma", "ac3",
+                "mp4", "mkv", "webm", "avi", "mov", "m4v", "ts", "flv", "wmv", "ogv", "gif", "mp3",
+                "wav", "flac", "ogg", "m4a", "opus", "aac", "aiff", "wma", "ac3",
             ],
         }
     }
@@ -967,6 +967,16 @@ fn ffmpeg_args(target: &str) -> &'static [&'static str] {
             "aac", "-b:a", "160k",
         ],
         "wmv" => &["-c:v", "wmv2", "-q:v", "4", "-c:a", "wmav2", "-b:a", "192k"],
+        "ogv" => &[
+            "-c:v",
+            "libtheora",
+            "-q:v",
+            "7",
+            "-c:a",
+            "libvorbis",
+            "-q:a",
+            "5",
+        ],
         "webm" => &[
             "-c:v",
             "libvpx-vp9",
