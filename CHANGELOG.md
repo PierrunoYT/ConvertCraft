@@ -6,6 +6,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Changed
 
+- README: CI, platform, and license badges, a screenshot of a finished batch, and separate Windows, macOS, and Linux setup sections.
 - Renamed the Cargo package and executable from `transmute` to `convertcraft`.
 - Replaced the logo with an orange-and-blue conversion-arrow mark, shared by the window icon, app header, empty queue, and README.
 - Separated branding from queue controls and rewrote the README with setup, workflow, supported formats, and conversion limitations.

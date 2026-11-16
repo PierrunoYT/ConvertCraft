@@ -8,7 +8,7 @@ Install a current stable Rust toolchain and native build tools, then run from th
 cargo run --release --locked
 ```
 
-The package uses Rust edition 2024, requiring at least Rust 1.85; dependencies may impose additional toolchain or platform requirements. The source includes file-manager integration for Windows, macOS, and other Unix desktops, but this does not establish that every platform has been tested.
+The package uses Rust edition 2024, requiring at least Rust 1.85; dependencies may impose additional toolchain or platform requirements. ConvertCraft runs on Windows, macOS, and Linux (X11 and Wayland); see the [README](../README.md#getting-started) for each platform's build dependencies. On macOS, `scripts/bundle-macos.sh` builds a double-clickable `ConvertCraft.app`.
 
 For audio/video support, install FFmpeg with the codecs listed in the [format reference](formats.md), add its executable directory to `PATH`, and verify `ffmpeg -version`. On macOS, a Homebrew FFmpeg (`brew install ffmpeg`) is found even when ConvertCraft is opened from Finder; build the app with `scripts/bundle-macos.sh`. The header shows an **ffmpeg ✔** or **ffmpeg missing** badge. This check happens once at startup, so restart after installing FFmpeg or changing the launch environment.
 

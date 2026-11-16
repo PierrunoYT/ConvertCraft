@@ -7,13 +7,21 @@
 <p align="center"><strong>Your files. A new format. All on your desktop.</strong></p>
 
 <p align="center">
+  <a href="https://github.com/PierrunoYT/ConvertCraft/actions/workflows/ci.yml"><img src="https://github.com/PierrunoYT/ConvertCraft/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI status"></a>
+  <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-blue" alt="Platforms: Windows, macOS, Linux">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License: GPL-3.0"></a>
+</p>
+
+<p align="center">
   <a href="#getting-started">Get started</a> ·
   <a href="#supported-formats">Supported formats</a> ·
   <a href="docs/user-guide.md">User guide</a> ·
   <a href="docs/development.md">Development</a>
 </p>
 
-ConvertCraft is a native desktop batch converter for **images, structured data, audio, and video**, built with Rust and egui/eframe. Files are processed locally without uploading them to a conversion service. Image and data conversion run in Rust; audio and video use your local FFmpeg installation.
+ConvertCraft is a native desktop batch converter for **images, structured data, audio, and video** on **Windows, macOS, and Linux**, built with Rust and egui/eframe. Files are processed locally without uploading them to a conversion service. Image and data conversion run in Rust; audio and video use your local FFmpeg installation.
+
+![ConvertCraft after converting a video, two data files, an audio file, and an image](assets/screenshots/main-window.png)
 
 ## What you can do
 
@@ -50,22 +58,31 @@ cargo build --release --locked
 
 The executable is `target/release/convertcraft` on Linux/macOS or `target/release/convertcraft.exe` on Windows. The Cargo package and executable were previously named `transmute`; update any scripts or shortcuts that use the old name.
 
-On macOS, build a double-clickable app with:
+### Windows
+
+Install the MSVC build tools (Visual Studio Build Tools with the C++ workload). The executable carries the ConvertCraft icon for Explorer, the taskbar, and shortcuts. For audio and video, add the directory containing `ffmpeg.exe` to `PATH`.
+
+### macOS
+
+Install the Xcode Command Line Tools (`xcode-select --install`), then build a double-clickable app:
 
 ```sh
 scripts/bundle-macos.sh
 ```
 
-This builds the release binary and wraps it in `target/release/ConvertCraft.app` with the logo as its icon. Drag the app to `/Applications`, or open it from Finder. The bundle is ad-hoc signed, which is enough on the Mac that built it; a copy downloaded from elsewhere needs a Developer ID signature and notarization before Gatekeeper will open it.
+This builds the release binary and wraps it in `target/release/ConvertCraft.app` with the logo as its icon. Drag the app to `/Applications`, or open it from Finder. A Homebrew FFmpeg (`brew install ffmpeg`) is found even when the app is opened from Finder or the Dock. The bundle is ad-hoc signed, which is enough on the Mac that built it; a copy downloaded from elsewhere needs a Developer ID signature and notarization before Gatekeeper will open it.
 
-On Debian/Ubuntu, install the native build and graphics dependencies with:
+### Linux
+
+On Debian/Ubuntu, install the native build and graphics dependencies, plus FFmpeg for audio and video:
 
 ```sh
 sudo apt-get update
-sudo apt-get install build-essential pkg-config libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libgl1-mesa-dev
+sudo apt-get install build-essential pkg-config libxkbcommon-dev libxkbcommon-x11-0 \
+  libwayland-dev libgl1-mesa-dev ffmpeg
 ```
 
-Linux file pickers use the desktop's XDG portal service and fall back to `zenity` when no portal is available. If **Add files…** or **Add folder…** does nothing, install `xdg-desktop-portal` with the backend for your desktop, or install `zenity` (`sudo apt-get install zenity`). ConvertCraft runs natively on both X11 and Wayland.
+ConvertCraft runs natively on both X11 and Wayland. File pickers use the desktop's XDG portal service and fall back to `zenity` when no portal is available. If **Add files…** or **Add folder…** does nothing, install `xdg-desktop-portal` with the backend for your desktop, or install `zenity` (`sudo apt-get install zenity`).
 
 ### Enable audio and video
 
@@ -126,12 +143,13 @@ The existing tests exercise image targets, structured data round trips, output-p
 | [`src/output.rs`](src/output.rs) | Output planning, batch input protection, and staged publication |
 | [`src/import.rs`](src/import.rs) | Bounded background folder scan for file and folder import |
 | [`scripts/bundle-macos.sh`](scripts/bundle-macos.sh) | Builds `ConvertCraft.app` on macOS |
+| [`assets/screenshots/`](assets/screenshots/) | README screenshot of the main window |
 | [`assets/logos/`](assets/logos/) | Transparent logo (`logo.png`) and light/dark previews (`logo-light.png`, `logo-dark.png`) |
 | [`docs/`](docs/README.md) | User guide, format details, and architecture |
 
 The window title and in-app name use `APP_NAME` in `src/main.rs`. The embedded logo is decoded once at startup and reused for the native icon and UI texture; no external asset folder is needed beside the compiled executable.
 
-For implementation details and extension guidance, read [Development and architecture](docs/development.md). Platform-specific integrations exist for Windows, macOS, and Unix desktops; this is not a claim that every platform has been tested.
+For implementation details and extension guidance, read [Development and architecture](docs/development.md). CI builds and tests ConvertCraft on Windows, macOS, and Linux and builds the macOS app bundle; the user interface itself has no automated tests.
 
 ## Documentation and help
 

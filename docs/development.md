@@ -12,7 +12,7 @@ cargo test --locked --workspace
 
 Build artifacts are written to `target/`, which is ignored by Git. Release executables are `target/release/convertcraft` or `target/release/convertcraft.exe`. Windows release builds use the Windows GUI subsystem, so no console window is opened for the main application.
 
-The source includes Windows, macOS, and Unix file-manager integration. Platform-specific build dependencies and a cross-platform test matrix are not defined in this repository.
+The source includes Windows, macOS, and Unix file-manager integration. The README lists each platform's build dependencies, and CI tests on Windows, macOS, and Linux (see [Continuous integration](#continuous-integration)).
 
 ## Source layout
 
@@ -24,6 +24,7 @@ The source includes Windows, macOS, and Unix file-manager integration. Platform-
 - `src/output.rs`: batch input identity protection, destination planning, staged output publication, and filesystem regression tests.
 - `crates/file-id/`: `convertcraft-file-id`, a small crate that safely wraps the two file-identity calls std does not expose: `GetFileInformationByHandleEx` with `FileIdInfo` on Windows and the `FS_IOC_GETVERSION` ioctl on Linux. It holds the project's only `unsafe` code, so the application crate can forbid it.
 - `scripts/bundle-macos.sh`: builds `target/release/ConvertCraft.app` on macOS: the release binary, an `.icns` icon generated from `logo.png` with `sips` and `iconutil`, and `Info.plist` (version from `Cargo.toml`), ad-hoc signed with `codesign`. It needs only the tools that ship with macOS.
+- `assets/screenshots/`: the README screenshot (`main-window.png`, captured at 2× from a real batch). It is not embedded in the application.
 - `assets/logos/`: transparent logo (`logo.png`) and light/dark previews (`logo-light.png`, `logo-dark.png`). Only `logo.png` is embedded and shared by the window icon, app header, empty queue, and README. The UI texture is uploaded once at startup and retained by `App`.
 - `docs/`: user-facing behavior and developer reference.
 
