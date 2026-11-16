@@ -87,7 +87,7 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" | "caf" | "wv"
         | "tta" | "au" => Category::Audio,
         "mp4" | "mkv" | "webm" | "avi" | "divx" | "mov" | "wmv" | "asf" | "flv" | "f4v" | "m4v"
-        | "mpg" | "mpeg" | "m2v" | "ts" => Category::Video,
+        | "mpg" | "mpeg" | "m2v" | "vob" | "ts" => Category::Video,
         _ => return None,
     };
     Some(cat)
@@ -1754,6 +1754,7 @@ mod tests {
         }
         let codecs: &[&str] = match ext {
             "mpg" | "mpeg" => &["-c:v", "mpeg2video", "-c:a", "mp2"],
+            "vob" => &["-f", "vob", "-c:v", "mpeg2video", "-c:a", "mp2"],
             "m2v" => &["-c:v", "mpeg2video"],
             "f4v" => &["-c:v", "libx264", "-c:a", "aac"],
             "divx" => &["-f", "avi"],
@@ -1779,7 +1780,7 @@ mod tests {
             "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "m4b", "aac", "opus", "wma",
             "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "caf", "wv", "tta", "au", "mp4",
             "mkv", "webm", "avi", "divx", "mov", "wmv", "asf", "flv", "f4v", "m4v", "mpg", "mpeg",
-            "m2v", "ts",
+            "m2v", "vob", "ts",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();

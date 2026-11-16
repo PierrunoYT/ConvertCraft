@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- VOB (DVD video) input.
 - M2V (raw MPEG-2 video) input.
 - F4V video input.
 - ASF video input.

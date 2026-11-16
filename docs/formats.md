@@ -113,7 +113,7 @@ All audio target presets disable video with `-vn`:
 
 ## Video
 
-**Input extensions:** `mp4`, `mkv`, `webm`, `avi`, `divx`, `mov`, `wmv`, `asf`, `flv`, `f4v`, `m4v`, `mpg`, `mpeg`, `m2v`, `ts`.
+**Input extensions:** `mp4`, `mkv`, `webm`, `avi`, `divx`, `mov`, `wmv`, `asf`, `flv`, `f4v`, `m4v`, `mpg`, `mpeg`, `m2v`, `vob`, `ts`.
 
 **Output targets:** `mp4`, `mkv`, `webm`, `avi`, `mov`, `gif`, `mp3`, `wav`, `m4a`.
 
