@@ -100,7 +100,7 @@ Nested JSON text is not automatically parsed back into nested values when readin
 
 **Input extensions:** `mp3`, `mp2`, `wav`, `w64`, `flac`, `ogg`, `oga`, `m4a`, `m4b`, `aac`, `opus`, `wma`, `aiff`, `aif`, `aifc`, `ac3`, `eac3`, `dts`, `mka`, `caf`, `wv`, `tta`, `au`.
 
-**Output targets:** `mp3`, `wav`, `flac`, `ogg`, `m4a`, `opus`, `aac`.
+**Output targets:** `mp3`, `wav`, `flac`, `ogg`, `m4a`, `opus`, `aac`, `aiff`.
 
 All audio target presets disable video with `-vn`:
 
@@ -111,6 +111,7 @@ All audio target presets disable video with `-vn`:
 - **M4A:** AAC at `192k`.
 - **Opus:** `libopus` at `128k`.
 - **AAC:** raw ADTS AAC at `192k`.
+- **AIFF:** 16-bit big-endian PCM.
 
 ## Video
 
