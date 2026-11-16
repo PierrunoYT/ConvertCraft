@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- WavPack (`.wv`) audio input.
 - CAF (Core Audio Format) input.
 - MKA (Matroska audio) input.
 - DTS audio input.
