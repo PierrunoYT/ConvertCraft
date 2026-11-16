@@ -83,9 +83,8 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr" | "ff"
         | "dds" => Category::Image,
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
-        "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
-            Category::Audio
-        }
+        "mp3" | "mp2" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff"
+        | "aif" => Category::Audio,
         "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg" | "ts" => {
             Category::Video
         }
@@ -1738,19 +1737,19 @@ mod tests {
     /// Generate a short sample in `dir` for one media input extension.
     fn media_fixture(dir: &Path, ext: &str) -> PathBuf {
         let path = dir.join(format!("sample.{ext}"));
-        let video = !matches!(
-            ext,
-            "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif"
-        );
+        let video = detect(&path) == Some(Category::Video);
         let mut cmd = ffmpeg_command(ffmpeg_path().unwrap());
         cmd.args(["-y", "-loglevel", "error"]);
         if video {
             cmd.args(["-f", "lavfi", "-i", "testsrc=duration=1:size=64x48:rate=10"]);
         }
         cmd.args(["-f", "lavfi", "-i", "sine=duration=1"]);
-        if matches!(ext, "mpg" | "mpeg") {
-            cmd.args(["-c:v", "mpeg2video", "-c:a", "mp2"]);
-        }
+        let codecs: &[&str] = match ext {
+            "mpg" | "mpeg" => &["-c:v", "mpeg2video", "-c:a", "mp2"],
+            "mp2" => &["-c:a", "mp2"],
+            _ => &[],
+        };
+        cmd.args(codecs);
         let ok = cmd.arg("-shortest").arg(&path).status().unwrap().success();
         assert!(ok, "cannot generate {ext} fixture");
         path
@@ -1764,8 +1763,8 @@ mod tests {
         }
         let dir = tempfile::tempdir().unwrap();
         for ext in [
-            "mp3", "wav", "flac", "ogg", "m4a", "aac", "opus", "wma", "aiff", "aif", "mp4", "mkv",
-            "webm", "avi", "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
+            "mp3", "mp2", "wav", "flac", "ogg", "m4a", "aac", "opus", "wma", "aiff", "aif", "mp4",
+            "mkv", "webm", "avi", "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();
