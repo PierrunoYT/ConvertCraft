@@ -48,6 +48,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 - The FFmpeg availability check runs on a background thread instead of blocking startup (#24).
 - Batches no longer keep two open handles per queued job: source and destination identities are stored as keys, so large batches no longer run into the Unix open-file limit (#17).
 - A missing, unreadable, or non-regular source fails only its own row instead of the whole batch; completed rows whose sources were deleted no longer block new conversions (#16).
+- On Linux and macOS, converted files get ordinary permissions (0666 minus the umask, usually 0644) instead of owner-only 0600, so other users and services can read them.
 - Updated the yanked `async-executor` 1.14.0 and `clipboard-win` 5.4.1 to 1.14.1 and 5.4.3, so `cargo deny check` passes again.
 - On Linux, a source or existing destination deleted and recreated right after planning is now detected. ext4 reuses the inode number and, on kernels without fine-grained timestamps (such as Linux 6.1), often the change time, so the file key now includes the inode generation. The two identity tests failed about half the time on such kernels.
 - File systems that report no file ID are detected, and overwrite then uses a numbered name instead of replacing a file it cannot re-identify (#26).

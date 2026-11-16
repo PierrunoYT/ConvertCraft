@@ -317,9 +317,17 @@ impl OutputPlan {
                 .and_then(|s| s.to_str())
                 .context("output has no valid extension")?
         );
-        let file = tempfile::Builder::new()
-            .prefix("output-")
-            .suffix(&suffix)
+        let mut builder = tempfile::Builder::new();
+        builder.prefix("output-").suffix(&suffix);
+        // Published outputs get ordinary file permissions (0666 minus the umask,
+        // usually 0644) instead of tempfile's owner-only 0600. The staging directory
+        // stays owner-only until publication.
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            builder.permissions(fs::Permissions::from_mode(0o666));
+        }
+        let file = builder
             .tempfile_in(directory.path())
             .context("cannot create staged output")?;
         Ok(StagedOutput {
@@ -670,6 +678,25 @@ mod tests {
         fs::write(&output, b"different file").unwrap();
         assert!(publish(plan, b"replacement").is_err());
         assert_eq!(fs::read(output).unwrap(), b"different file");
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn published_outputs_get_ordinary_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+        let status = fs::read_to_string("/proc/self/status").unwrap();
+        let umask = status
+            .lines()
+            .find_map(|line| line.strip_prefix("Umask:"))
+            .map(|value| u32::from_str_radix(value.trim(), 8).unwrap())
+            .unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let input = dir.path().join("input.json");
+        fs::write(&input, b"{}").unwrap();
+        let mut planner = protect_all([input.as_path()]);
+        let output = publish(planner.plan(&input, None, "yaml", false).unwrap(), b"ok").unwrap();
+        let mode = fs::metadata(output).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode, 0o666 & !umask, "{mode:o}");
     }
 
     #[test]

@@ -94,7 +94,7 @@ Targets are restricted to each category. Extension recognition is case-insensiti
 
 ## Know before converting
 
-- **Keep originals and backups.** Each output is written to a temporary file and only published after a successful conversion, so a failed job leaves no partial file. Publication is still pathname-based and does not detect every filesystem alias.
+- **Keep originals and backups.** Each output is written to a temporary file and only published after a successful conversion, so a failed job leaves no partial file. Publication is still pathname-based and does not detect every filesystem alias. On Linux and macOS, outputs get the usual permissions for new files (0644 with the common umask); replacing an existing output does not keep its old permissions.
 - **Images are not archival copies.** JPEG has no transparency, so transparent areas become white. ICO output fits within 256×256. Image conversion does not preserve animation frames or metadata, and only PNG and TIFF keep 16-bit depth.
 - **Data conversion can change representation.** Comments and formatting are lost. CSV infers numbers and booleans, so `1.50` becomes `1.5` and `true` becomes a boolean; values with leading zeros such as `00123` stay text. TOML rejects nulls and wraps non-object roots under `items`. See [data compatibility](docs/formats.md#structured-data).
 - **Media is re-encoded.** Fixed presets determine quality and codec selection; there are no bitrate, trimming, subtitle, or stream-selection controls.
