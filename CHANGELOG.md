@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- MTS/M2TS (AVCHD, Blu-ray transport stream) video input.
 - VOB (DVD video) input.
 - M2V (raw MPEG-2 video) input.
 - F4V video input.
