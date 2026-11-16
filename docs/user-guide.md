@@ -10,7 +10,7 @@ cargo run --release --locked
 
 The package uses Rust edition 2024, requiring at least Rust 1.85; dependencies may impose additional toolchain or platform requirements. The source includes file-manager integration for Windows, macOS, and other Unix desktops, but this does not establish that every platform has been tested.
 
-For audio/video support, install FFmpeg with the codecs listed in the [format reference](formats.md), add its executable directory to `PATH`, and verify `ffmpeg -version`. The top bar shows **ffmpeg ✔** or **ffmpeg missing**. This check happens once at startup, so restart after installing FFmpeg or changing the launch environment.
+For audio/video support, install FFmpeg with the codecs listed in the [format reference](formats.md), add its executable directory to `PATH`, and verify `ffmpeg -version`. The header shows an **ffmpeg ✔** or **ffmpeg missing** badge. This check happens once at startup, so restart after installing FFmpeg or changing the launch environment.
 
 ## Add files and folders
 
@@ -18,17 +18,19 @@ For audio/video support, install FFmpeg with the codecs listed in the [format re
 - **Add folder…** recursively visits the selected directory.
 - Drag files or folders onto the window, or click the empty drop area to browse.
 
-Imports run in the background: the top bar shows **Scanning… N files found** with a **Cancel** button, and queue controls and **Convert** are disabled until the scan finishes. Directory entries are visited in sorted order. Files with unrecognized extensions are skipped. Adding an identical path already in the queue has no effect. Paths are not canonicalized, so alternate paths to the same file are not reliably deduplicated.
+Imports run in the background: the toolbar shows **Scanning… N files found** with a **Cancel** button, and queue controls and **Convert** are disabled until the scan finishes. Directory entries are visited in sorted order. Files with unrecognized extensions are skipped. Adding an identical path already in the queue has no effect. Paths are not canonicalized, so alternate paths to the same file are not reliably deduplicated.
 
 Symbolic links and junctions **inside** a folder are not followed, so link cycles cannot hang the import and links cannot pull in files from elsewhere. A folder or file you pick or drop yourself is used even if it is a link. Folders nested more than 64 levels deep are skipped, and a single import stops after 100,000 files or 20,000 folders. Special files (devices, pipes, sockets) are reported as errors instead of being queued.
 
-After an import, the top bar summarizes what was not queued: unsupported files, links not followed, folders nested too deeply, a stop message if a limit was hit, and the number of import errors. Hover the error count to see the affected paths.
+After an import, the toolbar summarizes what was not queued: unsupported files, links not followed, folders nested too deeply, a stop message if a limit was hit, and the number of import errors. Hover the error count to see the affected paths.
 
 ## Select targets and options
 
-Each row provides a **Convert to** menu with targets for its category. **Convert all** provides a separate menu for each category present in the queue. It changes targets, not conversion status.
+Each row provides a **Convert to** menu with targets for its category. The **Image**, **Data**, **Audio**, and **Video** chips next to **Convert all** each open a menu that sets the target of every queued file in that category; a chip is disabled when no file of its category is queued. They change targets, not conversion status.
 
 The initial target is the first supported target that differs from the input extension, accounting for the `jpeg`/`jpg`, `tif`/`tiff`, and `yml`/`yaml` aliases.
+
+Output settings are in the **Output options** panel on the right:
 
 - **Next to source file:** write into each input's parent directory (the default).
 - **Choose folder…:** put all outputs directly in one folder; the source directory hierarchy is not reproduced.
@@ -51,8 +53,8 @@ Statuses are **Pending**, **Converting…**, **Done**, or **Failed**. Hover over
 
 The progress bar counts finished jobs, including failures; it is not a byte-level or per-file encoding progress indicator. Media entries rejected because FFmpeg is missing are not included in the scheduled-job count.
 
-- **Clear finished** removes successful rows without deleting files.
-- **Clear all** removes all rows and resets the import summary without deleting files.
+- **Clear finished** (bottom bar) removes successful rows without deleting files.
+- **Clear all** (bottom bar) removes all rows and resets the import summary without deleting files.
 - The row's **✖** removes that entry without deleting its source or output.
 
 To reconvert a completed source, remove its row and add it again. Changing a completed row's target alone does not schedule another conversion. Click **Cancel** next to **Convert** to stop a running batch: no new jobs start, FFmpeg jobs stop immediately, image and data jobs already running finish, and unfinished rows are marked `cancelled`. Closing the window during a batch cancels it the same way. There is no settings persistence or saved queue.

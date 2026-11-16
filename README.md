@@ -112,7 +112,8 @@ The existing tests exercise image targets, structured data round trips, output-p
 
 | Path | Responsibility |
 | --- | --- |
-| [`src/main.rs`](src/main.rs) | Native UI, queue, worker scheduling, progress, and file-manager integration |
+| [`src/main.rs`](src/main.rs) | Native UI layout, queue, worker scheduling, progress, and file-manager integration |
+| [`src/theme.rs`](src/theme.rs) | Light visual style: palette, egui style, cards, and styled buttons |
 | [`src/converter.rs`](src/converter.rs) | Format detection, conversion backends, and tests |
 | [`src/output.rs`](src/output.rs) | Output planning, batch input protection, and staged publication |
 | [`src/import.rs`](src/import.rs) | Bounded background folder scan for file and folder import |

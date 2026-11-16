@@ -9,6 +9,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 - Renamed the Cargo package and executable from `transmute` to `convertcraft`.
 - Replaced the logo with an orange-and-blue conversion-arrow mark, shared by the window icon, app header, empty queue, and README.
 - Separated branding from queue controls and rewrote the README with setup, workflow, supported formats, and conversion limitations.
+- Redesigned the interface with a light theme: white header with an ffmpeg status badge, an orange **Add files…** button and color-coded category chips for **Convert all**, a card-style queue with category icons and status badges, an **Output options** side panel, and a bottom bar with progress, **Clear finished**, **Clear all**, **Cancel**, and **Convert**.
 
 ### Added
 

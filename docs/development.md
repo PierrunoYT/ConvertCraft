@@ -18,7 +18,8 @@ The source includes Windows, macOS, and Unix file-manager integration. Platform-
 
 - `Cargo.toml`: package metadata, dependencies, and the workspace.
 - `Cargo.lock`: resolved dependency versions.
-- `src/main.rs`: native window, queue state, file import, controls, worker scheduling, progress, and file-manager integration.
+- `src/main.rs`: native window layout (header, toolbar, queue card, **Output options** panel, bottom bar), queue state, file import, worker scheduling, progress, and file-manager integration.
+- `src/theme.rs`: the light visual style: color palette, global egui style, card frames, and the tinted/primary button and pill helpers. Use its colors instead of hard-coding new ones.
 - `src/converter.rs`: extension/category detection, target defaults, image/data/media backends, and unit tests.
 - `src/output.rs`: batch input identity protection, destination planning, staged output publication, and filesystem regression tests.
 - `crates/file-id/`: `convertcraft-file-id`, a small Windows-only crate that safely wraps the one Win32 call std does not expose (`GetFileInformationByHandleEx` with `FileIdInfo`). It holds the project's only `unsafe` code, so the application crate can forbid it.
