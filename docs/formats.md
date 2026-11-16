@@ -98,7 +98,7 @@ Nested JSON text is not automatically parsed back into nested values when readin
 
 ## Audio
 
-**Input extensions:** `mp3`, `mp2`, `wav`, `w64`, `flac`, `ogg`, `oga`, `m4a`, `m4b`, `aac`, `opus`, `wma`, `aiff`, `aif`.
+**Input extensions:** `mp3`, `mp2`, `wav`, `w64`, `flac`, `ogg`, `oga`, `m4a`, `m4b`, `aac`, `opus`, `wma`, `aiff`, `aif`, `aifc`.
 
 **Output targets:** `mp3`, `wav`, `flac`, `ogg`, `m4a`, `opus`.
 
