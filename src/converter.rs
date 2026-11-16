@@ -87,7 +87,7 @@ pub fn detect(path: &Path) -> Option<Category> {
         | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" | "caf" | "wv"
         | "tta" | "au" => Category::Audio,
         "mp4" | "mkv" | "webm" | "avi" | "divx" | "mov" | "wmv" | "asf" | "flv" | "f4v" | "m4v"
-        | "mpg" | "mpeg" | "m2v" | "vob" | "ts" | "mts" | "m2ts" | "3gp" | "3g2" | "ogv" => {
+        | "mpg" | "mpeg" | "m2v" | "vob" | "ts" | "mts" | "m2ts" | "3gp" | "3g2" | "ogv" | "dv" => {
             Category::Video
         }
         _ => return None,
@@ -837,8 +837,8 @@ impl<W: Write> Write for LimitedWriter<W> {
 
 /// Demuxers for the advertised audio/video inputs. Playlist and concat demuxers (HLS,
 /// ffconcat) that could pull other local files into the output are not on the list.
-const MEDIA_DEMUXERS: &str = "aac,ac3,aiff,asf,au,avi,caf,dts,eac3,flac,flv,matroska,mov,mp3,mpeg,\
-     mpegts,mpegvideo,ogg,tta,w64,wav,wv";
+const MEDIA_DEMUXERS: &str = "aac,ac3,aiff,asf,au,avi,caf,dts,dv,eac3,flac,flv,matroska,mov,mp3,\
+     mpeg,mpegts,mpegvideo,ogg,tta,w64,wav,wv";
 /// FFmpeg reports progress about twice a second; a job silent this long is stuck.
 const FFMPEG_STALL_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 /// Only the end of FFmpeg's error output is shown, so only the end is kept.
@@ -1749,16 +1749,31 @@ mod tests {
         let mut cmd = ffmpeg_command(ffmpeg_path().unwrap());
         cmd.args(["-y", "-loglevel", "error"]);
         if video {
-            cmd.args(["-f", "lavfi", "-i", "testsrc=duration=1:size=64x48:rate=10"]);
+            let source = match ext {
+                // DV only takes broadcast frame sizes and rates.
+                "dv" => "testsrc=duration=1:size=720x576:rate=25",
+                _ => "testsrc=duration=1:size=64x48:rate=10",
+            };
+            cmd.args(["-f", "lavfi", "-i", source]);
         }
         // Raw elementary streams carry no audio.
         if !matches!(ext, "m2v") {
-            cmd.args(["-f", "lavfi", "-i", "sine=duration=1"]);
+            cmd.args(["-f", "lavfi", "-i", "sine=duration=1:sample_rate=48000"]);
         }
         let codecs: &[&str] = match ext {
             "mpg" | "mpeg" => &["-c:v", "mpeg2video", "-c:a", "mp2"],
             "vob" => &["-f", "vob", "-c:v", "mpeg2video", "-c:a", "mp2"],
             "m2v" => &["-c:v", "mpeg2video"],
+            "dv" => &[
+                "-c:v",
+                "dvvideo",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "pcm_s16le",
+                "-ac",
+                "2",
+            ],
             "3gp" | "3g2" | "f4v" => &["-c:v", "libx264", "-c:a", "aac"],
             "divx" => &["-f", "avi"],
             "mts" | "m2ts" => &["-f", "mpegts"],
@@ -1784,7 +1799,7 @@ mod tests {
             "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "m4b", "aac", "opus", "wma",
             "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "caf", "wv", "tta", "au", "mp4",
             "mkv", "webm", "avi", "divx", "mov", "wmv", "asf", "flv", "f4v", "m4v", "mpg", "mpeg",
-            "m2v", "vob", "ts", "mts", "m2ts", "3gp", "3g2", "ogv",
+            "m2v", "vob", "ts", "mts", "m2ts", "3gp", "3g2", "ogv", "dv",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();
