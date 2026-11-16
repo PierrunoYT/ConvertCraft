@@ -1,8 +1,6 @@
 <p align="center">
   <img src="assets/logos/logo.png" alt="ConvertCraft — orange and blue conversion arrows forming a C" width="160" height="160">
 </p>
-ConvertCraft is one of the open-source desktop apps from [Pierruno](https://pierruno.dev/).
-
 
 <h1 align="center">ConvertCraft</h1>
 
@@ -22,6 +20,8 @@ ConvertCraft is one of the open-source desktop apps from [Pierruno](https://pier
 </p>
 
 ConvertCraft is a native desktop batch converter for **images, structured data, audio, and video** on **Windows, macOS, and Linux**, built with Rust and egui/eframe. Files are processed locally without uploading them to a conversion service. Image and data conversion run in Rust; audio and video use your local FFmpeg installation.
+
+ConvertCraft is one of the open-source desktop apps from [Pierruno](https://pierruno.dev/).
 
 ![ConvertCraft after converting a video, two data files, an audio file, and an image](assets/screenshots/main-window.png)
 
