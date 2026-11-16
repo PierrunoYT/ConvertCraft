@@ -28,7 +28,7 @@ After an import, the toolbar summarizes what was not queued: unsupported files, 
 
 Each row provides a **Convert to** menu with targets for its category. The **Image**, **Data**, **Audio**, and **Video** chips next to **Convert all** each open a menu that sets the target of every queued file in that category; a chip is disabled when no file of its category is queued. They change targets, not conversion status.
 
-The initial target is the first supported target that differs from the input extension, accounting for the `jpeg`/`jfif`/`jpg`, `apng`/`png`, `tif`/`tiff`, `pbm`/`pgm`/`ppm`/`pam`/`pnm`, `yml`/`yaml`, `aif`/`aifc`/`aiff`, `oga`/`ogg`, and `m4b`/`m4a` aliases.
+The initial target is the first supported target that differs from the input extension, accounting for the `jpeg`/`jfif`/`jpg`, `apng`/`png`, `tif`/`tiff`, `pbm`/`pgm`/`ppm`/`pam`/`pnm`, `yml`/`yaml`, `aif`/`aifc`/`aiff`, `oga`/`ogg`, `m4b`/`m4a`, and `asf`/`wmv` aliases.
 
 Output settings are in the **Output options** panel on the right:
 

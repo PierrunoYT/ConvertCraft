@@ -86,7 +86,7 @@ pub fn detect(path: &Path) -> Option<Category> {
         "mp3" | "mp2" | "wav" | "w64" | "flac" | "ogg" | "oga" | "m4a" | "m4b" | "aac" | "opus"
         | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" | "caf" | "wv"
         | "tta" | "au" => Category::Audio,
-        "mp4" | "mkv" | "webm" | "avi" | "divx" | "mov" | "wmv" | "flv" | "m4v" | "mpg"
+        "mp4" | "mkv" | "webm" | "avi" | "divx" | "mov" | "wmv" | "asf" | "flv" | "m4v" | "mpg"
         | "mpeg" | "ts" => Category::Video,
         _ => return None,
     };
@@ -114,6 +114,7 @@ fn normalize_ext(ext: &str) -> &str {
         "aif" | "aifc" => "aiff",
         "oga" => "ogg",
         "m4b" => "m4a",
+        "asf" => "wmv",
         other => other,
     }
 }
@@ -1772,7 +1773,7 @@ mod tests {
         for ext in [
             "mp3", "mp2", "wav", "w64", "flac", "ogg", "oga", "m4a", "m4b", "aac", "opus", "wma",
             "aiff", "aif", "aifc", "ac3", "eac3", "dts", "mka", "caf", "wv", "tta", "au", "mp4",
-            "mkv", "webm", "avi", "divx", "mov", "wmv", "flv", "m4v", "mpg", "mpeg", "ts",
+            "mkv", "webm", "avi", "divx", "mov", "wmv", "asf", "flv", "m4v", "mpg", "mpeg", "ts",
         ] {
             let src = media_fixture(dir.path(), ext);
             let cat = detect(&src).unwrap();

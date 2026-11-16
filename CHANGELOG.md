@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- ASF video input.
 - DivX (`.divx`, AVI container) video input.
 - Sun AU (`.au`) audio input.
 - TTA (True Audio) input.
