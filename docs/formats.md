@@ -4,11 +4,11 @@ The extension lists and targets below come from `Category::targets` and `detect`
 
 ## Images
 
-**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`, `exr`, `ff`.
+**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`, `exr`, `ff`, `dds`.
 
 **Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `hdr`, `exr`, `ff`.
 
-The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as DDS, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft.
+The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as AVIF, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft. DDS inputs decode their main surface only (no mipmaps, cube faces, or array layers).
 
 HDR (Radiance RGBE) and OpenEXR hold floating-point, linear-light pixels. Converting them to an 8- or 16-bit format clips values to the 0–1 range without tone mapping or a gamma curve, so bright highlights clip and the result may look darker than in an HDR viewer. Converting 8- or 16-bit images to HDR or EXR stores the sample values as-is, without linearizing them.
 

@@ -76,19 +76,19 @@ pub fn extension(path: &Path) -> String {
 }
 
 pub fn detect(path: &Path) -> Option<Category> {
-    let cat =
-        match extension(path).as_str() {
-            "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
-            | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr"
-            | "ff" => Category::Image,
-            "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
-            "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
-                Category::Audio
-            }
-            "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg"
-            | "ts" => Category::Video,
-            _ => return None,
-        };
+    let cat = match extension(path).as_str() {
+        "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
+        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr" | "ff"
+        | "dds" => Category::Image,
+        "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
+        "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
+            Category::Audio
+        }
+        "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg" | "ts" => {
+            Category::Video
+        }
+        _ => return None,
+    };
     Some(cat)
 }
 
@@ -173,7 +173,7 @@ const MAX_IMAGE_PIXELS: u64 = 100_000_000;
 /// Estimated memory shared by all concurrent image jobs.
 const IMAGE_MEMORY_BUDGET: u64 = 1536 * 1024 * 1024;
 /// Decoders accepted after content sniffing; matches the extensions in `detect`.
-const INPUT_IMAGE_FORMATS: [ImageFormat; 13] = [
+const INPUT_IMAGE_FORMATS: [ImageFormat; 14] = [
     ImageFormat::Png,
     ImageFormat::Jpeg,
     ImageFormat::WebP,
@@ -187,6 +187,7 @@ const INPUT_IMAGE_FORMATS: [ImageFormat; 13] = [
     ImageFormat::Hdr,
     ImageFormat::OpenExr,
     ImageFormat::Farbfeld,
+    ImageFormat::Dds,
 ];
 
 static IMAGE_MEMORY: MemoryBudget = MemoryBudget::new(IMAGE_MEMORY_BUDGET);

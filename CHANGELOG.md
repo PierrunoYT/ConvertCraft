@@ -18,6 +18,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- DDS image input (main surface only).
 - Farbfeld image input and output (16-bit RGBA).
 - OpenEXR image input and output (32-bit float RGB or RGBA).
 - Radiance HDR image input and output. Float images become 16-bit when saved as PNG and are clipped without tone mapping in 8- and 16-bit formats.

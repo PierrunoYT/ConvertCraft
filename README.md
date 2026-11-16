@@ -118,7 +118,7 @@ Failed rows can be retried with **Convert**. Successful rows are skipped on subs
 
 | Category | Inputs | Outputs | Backend |
 | --- | --- | --- | --- |
-| Images | PNG/APNG, JPG/JPEG/JFIF, WebP, BMP, GIF, TIF/TIFF, ICO, TGA, QOI, PNM/PBM/PGM/PPM/PAM, HDR, EXR, Farbfeld (FF) | PNG, JPG, WebP, BMP, GIF, TIFF, ICO, TGA, QOI, PNM, HDR, EXR, Farbfeld | Rust `image` |
+| Images | PNG/APNG, JPG/JPEG/JFIF, WebP, BMP, GIF, TIF/TIFF, ICO, TGA, QOI, PNM/PBM/PGM/PPM/PAM, HDR, EXR, Farbfeld (FF), DDS | PNG, JPG, WebP, BMP, GIF, TIFF, ICO, TGA, QOI, PNM, HDR, EXR, Farbfeld | Rust `image` |
 | Structured data | JSON, YAML/YML, TOML, CSV | JSON, YAML, TOML, CSV | Rust parsers and serializers |
 | Audio | MP3, WAV, FLAC, OGG, M4A, AAC, Opus, WMA, AIFF/AIF | MP3, WAV, FLAC, OGG, M4A, Opus | FFmpeg |
 | Video | MP4, MKV, WebM, AVI, MOV, WMV, FLV, M4V, MPG/MPEG, TS | MP4, MKV, WebM, AVI, MOV, GIF; MP3/WAV/M4A audio extraction | FFmpeg |
