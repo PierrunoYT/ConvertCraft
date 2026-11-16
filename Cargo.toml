@@ -16,7 +16,7 @@ csv = "1"
 eframe = { version = "0.37", default-features = false, features = ["accesskit", "clipboard", "default_fonts", "glow", "links", "wayland", "x11"] }
 # Emoji glyphs used by the UI (➕ 📁 ✔ ✖) are no longer bundled by default.
 egui = { version = "0.37", default-features = false, features = ["monochrome_emoji_fonts"] }
-image = { version = "0.25", default-features = false, features = ["bmp", "exr", "gif", "hdr", "ico", "jpeg", "png", "pnm", "qoi", "rayon", "tga", "tiff", "webp"] }
+image = { version = "0.25", default-features = false, features = ["bmp", "exr", "ff", "gif", "hdr", "ico", "jpeg", "png", "pnm", "qoi", "rayon", "tga", "tiff", "webp"] }
 rfd = "0.17"
 serde = "1"
 serde_json = "1"

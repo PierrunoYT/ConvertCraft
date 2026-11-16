@@ -53,7 +53,7 @@ impl Category {
         match self {
             Category::Image => &[
                 "png", "jpg", "webp", "bmp", "gif", "tiff", "ico", "tga", "qoi", "pnm", "hdr",
-                "exr",
+                "exr", "ff",
             ],
             Category::Data => &["json", "yaml", "toml", "csv"],
             Category::Audio => &["mp3", "wav", "flac", "ogg", "m4a", "opus"],
@@ -76,20 +76,19 @@ pub fn extension(path: &Path) -> String {
 }
 
 pub fn detect(path: &Path) -> Option<Category> {
-    let cat = match extension(path).as_str() {
-        "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
-        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr" => {
-            Category::Image
-        }
-        "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
-        "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
-            Category::Audio
-        }
-        "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg" | "ts" => {
-            Category::Video
-        }
-        _ => return None,
-    };
+    let cat =
+        match extension(path).as_str() {
+            "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
+            | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr"
+            | "ff" => Category::Image,
+            "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
+            "mp3" | "wav" | "flac" | "ogg" | "m4a" | "aac" | "opus" | "wma" | "aiff" | "aif" => {
+                Category::Audio
+            }
+            "mp4" | "mkv" | "webm" | "avi" | "mov" | "wmv" | "flv" | "m4v" | "mpg" | "mpeg"
+            | "ts" => Category::Video,
+            _ => return None,
+        };
     Some(cat)
 }
 
@@ -174,7 +173,7 @@ const MAX_IMAGE_PIXELS: u64 = 100_000_000;
 /// Estimated memory shared by all concurrent image jobs.
 const IMAGE_MEMORY_BUDGET: u64 = 1536 * 1024 * 1024;
 /// Decoders accepted after content sniffing; matches the extensions in `detect`.
-const INPUT_IMAGE_FORMATS: [ImageFormat; 12] = [
+const INPUT_IMAGE_FORMATS: [ImageFormat; 13] = [
     ImageFormat::Png,
     ImageFormat::Jpeg,
     ImageFormat::WebP,
@@ -187,6 +186,7 @@ const INPUT_IMAGE_FORMATS: [ImageFormat; 12] = [
     ImageFormat::Pnm,
     ImageFormat::Hdr,
     ImageFormat::OpenExr,
+    ImageFormat::Farbfeld,
 ];
 
 static IMAGE_MEMORY: MemoryBudget = MemoryBudget::new(IMAGE_MEMORY_BUDGET);
@@ -294,6 +294,7 @@ fn convert_image(
     // width × new height) plus its result.
     let copy_bytes = match target {
         "hdr" | "exr" => 16,
+        "ff" => 8,
         _ => 4,
     };
     let mut memory = decoder.total_bytes().saturating_add(pixels * copy_bytes);
@@ -329,6 +330,7 @@ fn convert_image(
                 "pnm" => ImageFormat::Pnm,
                 "hdr" => ImageFormat::Hdr,
                 "exr" => ImageFormat::OpenExr,
+                "ff" => ImageFormat::Farbfeld,
                 other => bail!("unsupported image target: {other}"),
             };
             encoder_layout(img, target).write_to(&mut writer, format)?;
@@ -391,6 +393,8 @@ fn encoder_layout(img: DynamicImage, target: &str) -> DynamicImage {
         "hdr" => DynamicImage::ImageRgb32F(img.into_rgb32f()),
         "exr" if alpha => DynamicImage::ImageRgba32F(img.into_rgba32f()),
         "exr" => DynamicImage::ImageRgb32F(img.into_rgb32f()),
+        // Farbfeld is always 16-bit RGBA.
+        "ff" => DynamicImage::ImageRgba16(img.into_rgba16()),
         // PNG keeps 8- and 16-bit layouts as-is; float (HDR, EXR) becomes 16-bit.
         "png" if bytes_per_sample == 4 && alpha => DynamicImage::ImageRgba16(img.into_rgba16()),
         "png" if bytes_per_sample == 4 => DynamicImage::ImageRgb16(img.into_rgb16()),

@@ -4,15 +4,15 @@ The extension lists and targets below come from `Category::targets` and `detect`
 
 ## Images
 
-**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`, `exr`.
+**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`, `exr`, `ff`.
 
-**Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `hdr`, `exr`.
+**Output targets:** `png`, `jpg`, `webp`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `hdr`, `exr`, `ff`.
 
 The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as DDS, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft.
 
 HDR (Radiance RGBE) and OpenEXR hold floating-point, linear-light pixels. Converting them to an 8- or 16-bit format clips values to the 0–1 range without tone mapping or a gamma curve, so bright highlights clip and the result may look darker than in an HDR viewer. Converting 8- or 16-bit images to HDR or EXR stores the sample values as-is, without linearizing them.
 
-Images larger than **100 megapixels** (for example 10,000×10,000) are rejected before their pixels are decoded. Normalizing to the target's layout needs up to 4 bytes per pixel on top of the decoded image (16 for HDR and EXR), so all running image jobs share an estimated memory budget of 1.5 GiB; a job waits for memory instead of running alongside the others when the budget is full.
+Images larger than **100 megapixels** (for example 10,000×10,000) are rejected before their pixels are decoded. Normalizing to the target's layout needs up to 4 bytes per pixel on top of the decoded image (8 for Farbfeld, 16 for HDR and EXR), so all running image jobs share an estimated memory budget of 1.5 GiB; a job waits for memory instead of running alongside the others when the budget is full.
 
 An EXIF orientation tag (set by cameras and phones for rotated shots) is applied to the pixels, so the output displays upright even though the metadata itself is not copied.
 
@@ -28,8 +28,9 @@ An EXIF orientation tag (set by cameras and phones for rotated shots) is applied
 - **GIF:** converts to 8-bit RGBA and quantizes to a 256-color palette.
 - **HDR:** 32-bit float RGB; alpha is dropped.
 - **EXR:** 32-bit float RGB for opaque inputs, RGBA otherwise.
+- **Farbfeld (`ff`):** always 16-bit RGBA.
 
-There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; APNG inputs convert their first frame. Only PNG, TIFF, and PNM keep 16-bit depth, and only HDR and EXR keep float samples.
+There are no controls for metadata, color profiles, WebP quality, or animation preservation. Do not assume conversion preserves metadata or all animation frames; APNG inputs convert their first frame. Only PNG, TIFF, PNM, and Farbfeld keep 16-bit depth, and only HDR and EXR keep float samples.
 
 ## Structured data
 
