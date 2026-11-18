@@ -89,6 +89,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Fixed
 
+- CSV output writes one row per item when the root is an object with a single key holding an array of objects, so TOML `[[items]]` tables (including ConvertCraft's own TOML output) no longer collapse into one JSON cell.
 - Output planning runs on a background thread, so a slow network share or an output folder crowded with numbered names no longer freezes the window (#24).
 - Windows file identity uses the 128-bit file ID (`FILE_ID_INFO`) instead of the 64-bit index, which is not unique on ReFS; volumes that cannot report it get an unknown identity and existing files there are never replaced (#26).
 - Upgraded eframe to 0.37, which drops the `quick-xml 0.30` advisories (RUSTSEC-2026-0194/-0195) and the unmaintained `paste` and `ttf-parser`, and replaced `serde_yaml`/`unsafe-libyaml` with the maintained pure-Rust `serde-saphyr` (#20).

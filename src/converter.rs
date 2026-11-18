@@ -766,6 +766,15 @@ fn csv_text(s: &str, formula_guard: bool) -> Cow<'_, str> {
 }
 
 fn write_csv(value: &Value, output: impl Write, formula_guard: bool) -> Result<()> {
+    // An object whose only value is an array of objects, such as the `items` wrapper
+    // of TOML output or `{"data": [...]}` from an API, is that table.
+    let value = match value {
+        Value::Object(map) if map.len() == 1 => match map.values().next() {
+            Some(inner @ Value::Array(items)) if items.iter().all(Value::is_object) => inner,
+            _ => value,
+        },
+        _ => value,
+    };
     let rows: Vec<&Map<String, Value>> = match value {
         Value::Array(items) => items
             .iter()
@@ -1635,6 +1644,24 @@ mod tests {
             assert_eq!(rows[1]["n"], 2.5, "{t}");
             assert_eq!(rows[0]["ok"], true, "{t}");
         }
+    }
+
+    #[test]
+    fn csv_output_unwraps_a_single_table_key() {
+        let dir = tempfile::tempdir().unwrap();
+        let toml = dir.path().join("rows.toml");
+        std::fs::write(&toml, "[[items]]\nid = 1\n\n[[items]]\nid = 2\n").unwrap();
+        let json = dir.path().join("mixed.json");
+        std::fs::write(&json, r#"{"items": [{"id": 1}, 2]}"#).unwrap();
+        let opts = Options::default();
+        let out = convert_to(&toml, dir.path(), Category::Data, "csv", &opts).unwrap();
+        assert_eq!(std::fs::read_to_string(out).unwrap(), "id\n1\n2\n");
+        // Arrays that are not rows stay a single JSON cell.
+        let out = convert_to(&json, dir.path(), Category::Data, "csv", &opts).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(out).unwrap(),
+            "items\n\"[{\"\"id\"\":1},2]\"\n"
+        );
     }
 
     #[test]

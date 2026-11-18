@@ -79,7 +79,7 @@ Images are decoded according to their contents. `unsupported image format` means
 
 ### TOML or CSV conversion fails or changes values
 
-TOML cannot represent null values. CSV output requires an object or an array of objects. CSV input infers numbers and booleans and treats empty fields as null; integers with leading zeros or beyond 64 bits stay text. Duplicate keys or CSV headers are rejected. Files over 64 MiB, or documents that expand beyond the memory limit, are refused. See the [data rules](formats.md#structured-data).
+TOML cannot represent null values. CSV output requires an object or an array of objects; an object with a single key holding an array of objects (such as TOML's `[[items]]` tables) is written as one row per object. CSV input infers numbers and booleans and treats empty fields as null; integers with leading zeros or beyond 64 bits stay text. Duplicate keys or CSV headers are rejected. Files over 64 MiB, or documents that expand beyond the memory limit, are refused. See the [data rules](formats.md#structured-data).
 
 ### Output cannot be written
 

@@ -85,7 +85,7 @@ For example, `00123` stays the string `"00123"` and `18446744073709551615` stays
 
 ### CSV output
 
-The root must be one object or an array containing only objects. Headers are the union of row keys encountered during iteration. With the current `serde_json` configuration, object keys use sorted map order, not guaranteed source insertion order.
+The root must be one object or an array containing only objects. An object whose only key holds an array of objects is treated as that array, so TOML output's `items` wrapper (or a JSON `{"data": [...]}` envelope) becomes one row per item instead of a single cell. Headers are the union of row keys encountered during iteration. With the current `serde_json` configuration, object keys use sorted map order, not guaranteed source insertion order.
 
 - Missing keys and nulls become empty fields.
 - Strings are written directly, with CSV quoting as needed.
