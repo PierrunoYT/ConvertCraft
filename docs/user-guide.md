@@ -51,7 +51,7 @@ Click **Convert** to process pending and failed entries. Successfully completed 
 
 Statuses are **Pending**, **Converting…**, **Done**, or **Failed**. Hover over **Failed** for its error text. Click **Done** to select the output in Explorer or Finder; on other Unix desktops the containing folder is opened with `xdg-open`.
 
-The progress bar counts finished jobs, including failures; it is not a byte-level or per-file encoding progress indicator. Media entries rejected because FFmpeg is missing are not included in the scheduled-job count.
+The progress bar counts finished jobs, including failures; it is not a byte-level or per-file encoding progress indicator. Media entries rejected because FFmpeg is missing are not included in the scheduled-job count. After a batch, the bar keeps showing its result until the queue changes (adding, removing, or clearing files), then the footer shows the queue size again.
 
 - **Clear finished** (bottom bar) removes successful rows without deleting files.
 - **Clear all** (bottom bar) removes all rows and resets the import summary without deleting files.

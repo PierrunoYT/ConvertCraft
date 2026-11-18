@@ -90,6 +90,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Fixed
 
+- The footer no longer keeps showing the previous batch's "N of M files" after files are added, removed, or cleared; it returns to the queue size.
 - CSV output writes one row per item when the root is an object with a single key holding an array of objects, so TOML `[[items]]` tables (including ConvertCraft's own TOML output) no longer collapse into one JSON cell.
 - Output planning runs on a background thread, so a slow network share or an output folder crowded with numbered names no longer freezes the window (#24).
 - Windows file identity uses the 128-bit file ID (`FILE_ID_INFO`) instead of the 64-bit index, which is not unique on ReFS; volumes that cannot report it get an unknown identity and existing files there are never replaced (#26).

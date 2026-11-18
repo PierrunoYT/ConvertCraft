@@ -263,10 +263,18 @@ impl App {
         self.running() || self.import.is_some()
     }
 
+    /// The footer shows the last batch's progress until the queue changes, then the
+    /// queue size again.
+    fn forget_last_batch(&mut self) {
+        self.total = 0;
+        self.finished = 0;
+    }
+
     fn add_paths(&mut self, ctx: &egui::Context, roots: Vec<PathBuf>) {
         if roots.is_empty() || self.busy() {
             return;
         }
+        self.forget_last_batch();
         let (tx, rx) = mpsc::channel();
         let cancel = Arc::new(AtomicBool::new(false));
         let flag = Arc::clone(&cancel);
@@ -681,12 +689,14 @@ impl App {
                         .clicked()
                     {
                         self.files.retain(|f| !matches!(f.status, Status::Done(_)));
+                        self.forget_last_batch();
                     }
                     if ui
                         .add(egui::Button::new("Clear all").min_size(egui::vec2(0.0, 38.0)))
                         .clicked()
                     {
                         self.files.clear();
+                        self.forget_last_batch();
                         self.report = ImportReport::default();
                     }
                 });
@@ -832,6 +842,7 @@ impl App {
             });
         if let Some(i) = remove {
             self.files.remove(i);
+            self.forget_last_batch();
         }
     }
 
