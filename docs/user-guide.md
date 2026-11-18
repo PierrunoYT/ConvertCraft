@@ -75,7 +75,7 @@ The file and folder pickers use the XDG desktop portal and fall back to `zenity`
 
 Category selection uses the filename extension, not content inspection. Check the [recognized extensions](formats.md) and make sure the contents match a supported format. Renaming an extension alone does not convert a file.
 
-Images are decoded according to their contents. `unsupported image format` means the file is really a format ConvertCraft does not read (for example OpenEXR saved as `.png`). `image is too large to convert` means it exceeds the 100-megapixel limit.
+Images are decoded according to their contents. `unsupported image format` means the file is really a format ConvertCraft does not read. `image is too large to convert` means it exceeds the 100-megapixel limit. `AVIF input needs FFmpeg` means FFmpeg was not found; AVIF is the one image format decoded through FFmpeg, and `cannot decode AVIF` means FFmpeg could not read the file or lacks an AV1 decoder.
 
 ### TOML or CSV conversion fails or changes values
 

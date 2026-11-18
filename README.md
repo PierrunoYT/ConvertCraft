@@ -42,7 +42,7 @@ ConvertCraft is one of the open-source desktop apps from [Pierruno](https://pier
 - A current stable [Rust toolchain](https://rustup.rs/), including Cargo. The crate uses edition 2024; its dependencies may require a newer compiler than the edition's minimum.
 - Native build tools for your platform: MSVC tools on Windows, Xcode Command Line Tools on macOS, or a C/C++ toolchain and development libraries on Linux.
 - A graphical desktop to run the application. ConvertCraft is not a command-line converter or web app.
-- **Optional:** [FFmpeg](https://ffmpeg.org/download.html) on `PATH` for audio and video. Images and structured data work without it.
+- **Optional:** [FFmpeg](https://ffmpeg.org/download.html) on `PATH` for audio, video, and AVIF input. Other images and structured data work without it.
 
 ### Build and launch
 
@@ -158,7 +158,7 @@ Failed rows can be retried with **Convert**. Successful rows are skipped on subs
 
 | Category | Inputs | Outputs | Backend |
 | --- | --- | --- | --- |
-| Images | PNG/APNG, JPG/JPEG/JFIF, WebP, BMP, GIF, TIF/TIFF, ICO, TGA, QOI, PNM/PBM/PGM/PPM/PAM, HDR, EXR, Farbfeld (FF), DDS | PNG, JPG, WebP, AVIF, BMP, GIF, TIFF, ICO, TGA, QOI, PNM, HDR, EXR, Farbfeld | Rust `image` |
+| Images | PNG/APNG, JPG/JPEG/JFIF, WebP, AVIF (via FFmpeg), BMP, GIF, TIF/TIFF, ICO, TGA, QOI, PNM/PBM/PGM/PPM/PAM, HDR, EXR, Farbfeld (FF), DDS | PNG, JPG, WebP, AVIF, BMP, GIF, TIFF, ICO, TGA, QOI, PNM, HDR, EXR, Farbfeld | Rust `image`; FFmpeg decodes AVIF |
 | Structured data | JSON, YAML/YML, TOML, CSV | JSON, YAML, TOML, CSV | Rust parsers and serializers |
 | Audio | MP3/MP2, WAV/W64, FLAC, OGG/OGA, M4A/M4B, AAC, Opus, WMA, AIFF/AIF/AIFC, AC3, E-AC3, DTS, MKA, CAF, WavPack, TTA, AU | MP3, WAV, FLAC, OGG, M4A, Opus, AAC, AIFF, WMA, AC3 | FFmpeg |
 | Video | MP4, MKV, WebM, AVI/DivX, MOV, WMV/ASF, FLV/F4V, M4V, MPG/MPEG/M2V, VOB, TS/MTS/M2TS, 3GP/3G2, OGV, MXF, RM/RMVB, DV, Y4M | MP4, MKV, WebM, AVI, MOV, M4V, TS, FLV, WMV, OGV, animated GIF/WebP; audio extraction to every audio target | FFmpeg |
@@ -168,7 +168,7 @@ Targets are restricted to each category. Extension recognition is case-insensiti
 ## Know before converting
 
 - **Keep originals and backups.** Each output is written to a temporary file and only published after a successful conversion, so a failed job leaves no partial file. Publication is still pathname-based and does not detect every filesystem alias. On Linux and macOS, outputs get the usual permissions for new files (0644 with the common umask); replacing an existing output does not keep its old permissions.
-- **Images are not archival copies.** JPEG has no transparency, so transparent areas become white. ICO output fits within 256×256. Image conversion does not preserve animation frames or metadata; only PNG, TIFF, PNM, and Farbfeld keep 16-bit depth, and only HDR and EXR keep float samples. HDR/EXR converted to other formats are clipped without tone mapping.
+- **Images are not archival copies.** JPEG has no transparency, so transparent areas become white. AVIF input loses its transparency. ICO output fits within 256×256. Image conversion does not preserve animation frames or metadata; only PNG, TIFF, PNM, and Farbfeld keep 16-bit depth, and only HDR and EXR keep float samples. HDR/EXR converted to other formats are clipped without tone mapping.
 - **Data conversion can change representation.** Comments and formatting are lost. CSV infers numbers and booleans, so `1.50` becomes `1.5` and `true` becomes a boolean; values with leading zeros such as `00123` stay text. TOML rejects nulls and wraps non-object roots under `items`. See [data compatibility](docs/formats.md#structured-data).
 - **Media is re-encoded.** Fixed presets determine quality and codec selection; there are no bitrate, trimming, subtitle, or stream-selection controls.
 - **Sessions are temporary.** Settings and the queue are not saved. A running batch can be cancelled; image and data jobs already in progress finish first.

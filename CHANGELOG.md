@@ -19,6 +19,7 @@ This changelog records the current implementation. `Cargo.toml` declares version
 
 ### Added
 
+- AVIF image input, decoded through FFmpeg (transparency is not kept).
 - Animated WebP output from video.
 - OGV (Theora/Vorbis) video output.
 - WMV video output.

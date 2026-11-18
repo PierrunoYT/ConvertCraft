@@ -23,6 +23,7 @@ use image::{
 };
 use serde::de::{self, DeserializeSeed, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde_json::{Map, Value};
+use tempfile::NamedTempFile;
 
 use crate::output::OutputPlan;
 
@@ -82,9 +83,9 @@ pub fn extension(path: &Path) -> String {
 
 pub fn detect(path: &Path) -> Option<Category> {
     let cat = match extension(path).as_str() {
-        "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "bmp" | "gif" | "tif" | "tiff"
-        | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr" | "exr" | "ff"
-        | "dds" => Category::Image,
+        "png" | "apng" | "jpg" | "jpeg" | "jfif" | "webp" | "avif" | "bmp" | "gif" | "tif"
+        | "tiff" | "ico" | "tga" | "qoi" | "pnm" | "pbm" | "pgm" | "ppm" | "pam" | "hdr"
+        | "exr" | "ff" | "dds" => Category::Image,
         "json" | "yaml" | "yml" | "toml" | "csv" => Category::Data,
         "mp3" | "mp2" | "wav" | "w64" | "flac" | "ogg" | "oga" | "m4a" | "m4b" | "aac" | "opus"
         | "wma" | "aiff" | "aif" | "aifc" | "ac3" | "eac3" | "dts" | "mka" | "caf" | "wv"
@@ -165,7 +166,20 @@ pub fn convert(
     let source = output.open_source(input)?;
     let mut staged = output.begin()?;
     match cat {
-        Category::Image => convert_image(input, source, staged.file_mut(), target, opts)?,
+        Category::Image => {
+            // Owned by the staging directory, so a decoded AVIF is cleaned up with it.
+            let scratch = staged.path().parent().map(Path::to_path_buf);
+            let scratch = scratch.context("staged output has no directory")?;
+            convert_image(
+                input,
+                source,
+                &scratch,
+                staged.file_mut(),
+                target,
+                opts,
+                cancel,
+            )?
+        }
         Category::Data => convert_data(input, source, staged.file_mut(), target, opts)?,
         Category::Audio | Category::Video => {
             // FFmpeg reopens the path itself; the check above ran just before.
@@ -183,7 +197,8 @@ pub fn convert(
 const MAX_IMAGE_PIXELS: u64 = 100_000_000;
 /// Estimated memory shared by all concurrent image jobs.
 const IMAGE_MEMORY_BUDGET: u64 = 1536 * 1024 * 1024;
-/// Decoders accepted after content sniffing; matches the extensions in `detect`.
+/// Decoders accepted after content sniffing; with AVIF (decoded through FFmpeg) these
+/// match the image extensions in `detect`.
 const INPUT_IMAGE_FORMATS: [ImageFormat; 14] = [
     ImageFormat::Png,
     ImageFormat::Jpeg,
@@ -258,9 +273,11 @@ impl Drop for Reservation<'_> {
 fn convert_image(
     input: &Path,
     source: File,
+    scratch: &Path,
     output: &mut File,
     target: &str,
     opts: &Options,
+    cancel: &AtomicBool,
 ) -> Result<()> {
     // Content wins over the extension (a PNG named .jpg still converts), but only
     // advertised formats are decoded.
@@ -269,12 +286,23 @@ fn convert_image(
     if let Ok(format) = ImageFormat::from_path(input) {
         reader.set_format(format);
     }
-    let reader = reader.with_guessed_format()?;
+    let mut reader = reader.with_guessed_format()?;
     let format = reader.format().context("unrecognized image format")?;
-    ensure!(
-        INPUT_IMAGE_FORMATS.contains(&format),
-        "unsupported image format: {format:?}"
-    );
+    // Holds the decoded AVIF until the conversion finishes.
+    let _decoded_avif;
+    if format == ImageFormat::Avif {
+        // FFmpeg reopens the path; `open_source` checked its identity just before.
+        drop(reader);
+        let png = decode_avif(input, scratch, cancel)?;
+        let file = png.reopen().context("cannot read decoded AVIF")?;
+        reader = image::ImageReader::with_format(BufReader::new(file), ImageFormat::Png);
+        _decoded_avif = png;
+    } else {
+        ensure!(
+            INPUT_IMAGE_FORMATS.contains(&format),
+            "unsupported image format: {format:?}"
+        );
+    }
     let mut decoder = reader.into_decoder().context("cannot decode image")?;
     let (width, height) = decoder.dimensions();
     let pixels = u64::from(width) * u64::from(height);
@@ -1031,18 +1059,67 @@ fn ffmpeg_args(target: &str) -> &'static [&'static str] {
 fn convert_media(input: &Path, output: &Path, target: &str, cancel: &AtomicBool) -> Result<()> {
     let ffmpeg = ffmpeg_path()
         .context("ffmpeg was not found on PATH — install it to convert audio/video")?;
+    run_ffmpeg(
+        ffmpeg,
+        input,
+        MEDIA_DEMUXERS,
+        ffmpeg_args(target),
+        output,
+        cancel,
+    )
+}
+
+/// Largest decoded AVIF accepted: the pixel limit at 16-bit RGBA, before compression.
+const MAX_DECODED_AVIF_BYTES: u64 = MAX_IMAGE_PIXELS * 8;
+
+/// Decodes the primary AVIF image to a PNG in `scratch`. The `image` crate's AVIF
+/// decoder needs the native dav1d library, so FFmpeg (libdav1d or libaom) decodes it.
+fn decode_avif(input: &Path, scratch: &Path, cancel: &AtomicBool) -> Result<NamedTempFile> {
+    let ffmpeg = ffmpeg_path().context("AVIF input needs FFmpeg, which was not found on PATH")?;
+    let png = tempfile::Builder::new()
+        .prefix("decoded-")
+        .suffix(".png")
+        .tempfile_in(scratch)
+        .context("cannot create decoded AVIF file")?;
+    let limit = MAX_DECODED_AVIF_BYTES.to_string();
+    let args = [
+        "-an",
+        "-frames:v",
+        "1",
+        "-update",
+        "1",
+        "-c:v",
+        "png",
+        "-fs",
+        &limit,
+    ];
+    // AVIF uses the ISO-BMFF ("mov") demuxer.
+    run_ffmpeg(ffmpeg, input, "mov", &args, png.path(), cancel).context("cannot decode AVIF")?;
+    let size = std::fs::metadata(png.path())?.len();
+    ensure!(size > 0, "cannot decode AVIF: FFmpeg produced no image");
+    ensure!(
+        size < MAX_DECODED_AVIF_BYTES,
+        "image is too large to convert (the limit is {} megapixels)",
+        MAX_IMAGE_PIXELS / 1_000_000
+    );
+    Ok(png)
+}
+
+fn run_ffmpeg(
+    ffmpeg: &Path,
+    input: &Path,
+    demuxers: &str,
+    args: &[&str],
+    output: &Path,
+    cancel: &AtomicBool,
+) -> Result<()> {
     let mut child = ffmpeg_command(ffmpeg)
         .args(["-y", "-nostdin", "-hide_banner", "-loglevel", "error"])
         .args(["-progress", "pipe:1"])
-        .args([
-            "-protocol_whitelist",
-            "file",
-            "-format_whitelist",
-            MEDIA_DEMUXERS,
-        ])
+        .args(["-protocol_whitelist", "file", "-format_whitelist", demuxers])
         .arg("-i")
         .arg(input)
-        .args(ffmpeg_args(target))
+        .args(args)
         .arg(output)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -1378,23 +1455,53 @@ mod tests {
     }
 
     #[test]
-    fn undeclared_image_formats_are_rejected() {
+    fn avif_inputs_decode_through_ffmpeg() {
+        if ffmpeg_path().is_none() {
+            require_unset("CONVERTCRAFT_REQUIRE_FFMPEG", "ffmpeg is unavailable");
+            return;
+        }
         let dir = tempfile::tempdir().unwrap();
-        let src = dir.path().join("photo.png");
-        // AVIF file-type box followed by junk; no AVIF decoder is built in.
-        std::fs::write(&src, b"\0\0\0\x1cftypavif\0\0\0\0junk").unwrap();
-        let error = convert_to(
+        let src = dir.path().join("src.png");
+        image::RgbImage::from_pixel(64, 48, image::Rgb([200, 40, 40]))
+            .save(&src)
+            .unwrap();
+        let opts = Options::default();
+        let avif = convert_to(
             &src,
-            dir.path(),
+            &dir.path().join("avif"),
             Category::Image,
-            "bmp",
-            &Options::default(),
+            "avif",
+            &opts,
         )
-        .unwrap_err();
+        .unwrap();
+        let png = convert_to(
+            &avif,
+            &dir.path().join("png"),
+            Category::Image,
+            "png",
+            &opts,
+        )
+        .unwrap_or_else(|e| panic!("{e:#}"));
+        let decoded = image::open(&png).unwrap().to_rgb8();
+        assert_eq!(decoded.dimensions(), (64, 48));
+        let image::Rgb([r, g, b]) = *decoded.get_pixel(32, 24);
+        assert!(r > 170 && g < 80 && b < 80, "{r},{g},{b}");
+        // Only the published PNG remains; the decoded intermediate was staged.
+        assert_eq!(
+            std::fs::read_dir(dir.path().join("png")).unwrap().count(),
+            1
+        );
+
+        // Content wins over the extension, and a damaged AVIF fails cleanly.
+        let broken = dir.path().join("broken.png");
+        std::fs::write(&broken, b"\0\0\0\x1cftypavif\0\0\0\0junk").unwrap();
+        let out = dir.path().join("broken");
+        let error = convert_to(&broken, &out, Category::Image, "bmp", &opts).unwrap_err();
         assert!(
-            format!("{error:#}").contains("unsupported image format: Avif"),
+            format!("{error:#}").contains("cannot decode AVIF"),
             "{error:#}"
         );
+        assert_eq!(std::fs::read_dir(out).unwrap().count(), 0);
     }
 
     #[test]

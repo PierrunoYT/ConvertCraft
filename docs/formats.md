@@ -4,11 +4,13 @@ The extension lists and targets below come from `Category::targets` and `detect`
 
 ## Images
 
-**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`, `exr`, `ff`, `dds`.
+**Input extensions:** `png`, `apng`, `jpg`, `jpeg`, `jfif`, `webp`, `avif`, `bmp`, `gif`, `tif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `pbm`, `pgm`, `ppm`, `pam`, `hdr`, `exr`, `ff`, `dds`.
 
 **Output targets:** `png`, `jpg`, `webp`, `avif`, `bmp`, `gif`, `tiff`, `ico`, `tga`, `qoi`, `pnm`, `hdr`, `exr`, `ff`.
 
-The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted: other formats the `image` crate can identify, such as AVIF, are rejected with `unsupported image format`, and their decoders are not built into ConvertCraft. AVIF is output-only because the `image` crate's AVIF decoder needs the native dav1d library. DDS inputs decode their main surface only (no mipmaps, cube faces, or array layers).
+The `image` crate opens the input, identifies its format from the file contents (falling back to the extension), and decodes a single image. The contents decide the decoder, so a PNG named `.jpg` still converts, but only the input formats listed above are accepted; anything else is rejected with `unsupported image format`. DDS inputs decode their main surface only (no mipmaps, cube faces, or array layers).
+
+AVIF inputs are decoded by FFmpeg, because the `image` crate's AVIF decoder needs the native dav1d library at build time. They therefore need FFmpeg on `PATH` with an AV1 decoder (libdav1d or libaom), fail with `AVIF input needs FFmpeg` without it, and can be cancelled like media jobs. FFmpeg decodes the primary image to a PNG inside the job's staging directory, which then goes through the same pipeline as other inputs (10- and 12-bit AVIF become 16-bit). FFmpeg reads only the color image: **AVIF transparency is not kept**, so transparent areas show the color stored under them.
 
 HDR (Radiance RGBE) and OpenEXR hold floating-point, linear-light pixels. Converting them to an 8- or 16-bit format clips values to the 0–1 range without tone mapping or a gamma curve, so bright highlights clip and the result may look darker than in an HDR viewer. Converting 8- or 16-bit images to HDR or EXR stores the sample values as-is, without linearizing them.
 

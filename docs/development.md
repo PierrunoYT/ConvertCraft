@@ -76,7 +76,7 @@ Each batch has a cancel flag. **Cancel** sets it: workers stop taking jobs, runn
 
 `convert` consumes an `OutputPlan`, creates an owned staging directory on the output filesystem, and dispatches by category:
 
-- Images decode into `DynamicImage` and encode to the open staging file, with checked buffer flushing (including JPEG).
+- Images decode into `DynamicImage` and encode to the open staging file, with checked buffer flushing (including JPEG). AVIF sources are first decoded by FFmpeg (`decode_avif`, sharing `run_ffmpeg` with the media backend) to a PNG in the staging directory.
 - Data passes through a `serde_json::Value` intermediate representation and writes to the open staging file.
 - Audio/video invokes FFmpeg with fixed target-specific arguments and a staged filename retaining the target extension.
 
